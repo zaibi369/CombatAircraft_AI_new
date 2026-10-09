@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: grounded-local-ai
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    environment:
+      CHAT_URL: ${CHAT_URL:-http://host.docker.internal:8081/v1/chat/completions}
+      CHAT_MODEL: ${CHAT_MODEL:-qwen3-0.6b}
+      VECTOR_DB_PATH: /data/vector-db
+      DATASET_STORAGE_PATH: /data/datasets
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: grounded-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+    restart: unless-stopped

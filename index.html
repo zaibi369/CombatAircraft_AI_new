@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grounded Local AI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef2f3;
+            max-width: 1000px;
+            margin: 15px auto;
+            padding: 10px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+
+        h2 {
+            color: var(--text-main);
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 20px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .dataset-picker {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        .dataset-picker legend {
+            width: 100%;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .dataset-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 36px;
+            padding: 7px 10px;
+            border: 1px solid #ccd2d8;
+            border-radius: 5px;
+            background: white;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .dataset-option:has(input:checked) {
+            border-color: #3498db;
+            background: #eaf5fc;
+        }
+
+        .dataset-option:focus-within {
+            outline: 3px solid #85c8f2;
+            outline-offset: 2px;
+        }
+
+        .dataset-option input {
+            margin: 0;
+        }
+
+        .dataset-status {
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .search-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        .search-picker legend {
+            width: 100%;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .search-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+            padding: 7px 10px;
+            border: 1px solid #ccd2d8;
+            border-radius: 5px;
+            background: white;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .search-option:has(input:checked) {
+            border-color: #25824b;
+            background: #eaf7ef;
+        }
+
+        .search-option:focus-within {
+            outline: 3px solid #85c8f2;
+            outline-offset: 2px;
+        }
+
+        .search-option input {
+            margin: 0;
+        }
+
+        .search-help {
+            width: 100%;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .source-list {
+            margin: 10px 0 0;
+            padding: 10px 10px 10px 28px;
+            border-top: 1px solid #d9e0e5;
+            font-size: 13px;
+        }
+
+        .source-list a {
+            color: var(--text-main);
+            overflow-wrap: anywhere;
+        }
+
+        .source-list small {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 700px) {
+            h2 {
+                align-items: flex-start;
+                gap: 10px;
+                flex-direction: column;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+            }
+        }
+
+        #chatbox {
+            height: 60vh;
+            border: 1px solid #dcdde1;
+            border-radius: 8px;
+            padding: 12px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            margin-bottom: 12px;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 8px;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            background: #3498db;
+            color: var(--text-main);
+            border: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .user-msg {
+            color: var(--text-main);
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #e3f2fd;
+            border-radius: 6px;
+        }
+
+        .ai-msg {
+            color: var(--text-main);
+            margin-bottom: 15px;
+            padding: 8px;
+            background: #f1f2f6;
+            border-radius: 6px;
+            line-height: 1.5;
+            white-space: pre-line;
+            font-size: 14px;
+        }
+
+        :root {
+            color-scheme: dark;
+            --app-bg: #212121;
+            --panel-bg: #2b2b2b;
+            --panel-muted: #171717;
+            --text-main: #fff0a6;
+            --text-muted: #e2d59a;
+            --border: #404040;
+            --accent: #ffe58a;
+            --focus: #fff3b8;
+        }
+
+        * { box-sizing: border-box; }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            max-width: none;
+            height: 100vh;
+            height: 100dvh;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            color: var(--text-main);
+            background: var(--app-bg);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+            line-height: 1.5;
+            transition: background-color .18s ease, color .18s ease;
+        }
+
+        button, input, select, textarea { font: inherit; }
+        button { color: inherit; }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 276px minmax(0, 1fr);
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+            padding: 12px 10px;
+            overflow-y: auto;
+            background: var(--panel-muted);
+            border-right: 1px solid var(--border);
+        }
+
+        .brand-row, .sidebar-actions, .composer-toolbar, .settings-heading,
+        .settings-footer, .topbar, .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .brand-mark {
+            display: grid;
+            width: 34px;
+            height: 34px;
+            place-items: center;
+            border-radius: 11px;
+            color: var(--text-main);
+            background: #373321;
+        }
+
+        .icon-button, .new-chat-button, .sidebar-link, .mode-option,
+        .source-option, .composer-action {
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .icon-button {
+            display: inline-grid;
+            width: 32px;
+            height: 32px;
+            place-items: center;
+            font-size: 18px;
+        }
+
+        .new-chat-button {
+            width: 100%;
+            min-height: 42px;
+            padding: 9px 12px;
+            text-align: left;
+            border-color: var(--border);
+            background: var(--panel-bg);
+            font-weight: 600;
+        }
+
+        .sidebar-link {
+            width: 100%;
+            padding: 8px 10px;
+            color: var(--text-muted);
+            text-align: left;
+        }
+
+        .sidebar-link:hover, .icon-button:hover, .composer-action:hover,
+        .source-option:hover, .mode-option:hover { background: var(--panel-bg); }
+
+        .chat-history { display: grid; gap: 6px; min-width: 0; }
+        .chat-history > summary { display: flex; justify-content: space-between; gap: 8px; padding: 7px 6px; border-radius: 8px; color: var(--text-muted); cursor: pointer; list-style: none; font-size: 12px; font-weight: 600; }
+        .chat-history > summary::-webkit-details-marker { display: none; }
+        .chat-history > summary::after { content: "⌄"; }
+        .chat-history[open] > summary::after { content: "⌃"; }
+        .chat-history-count { color: var(--accent); font-size: 10px; font-weight: 400; }
+        .chat-history-search { width: 100%; min-height: 32px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; color: var(--text-main); background: var(--panel-bg); font-size: 12px; }
+        .chat-history-list { display: grid; gap: 6px; max-height: 210px; overflow-y: auto; }
+        .chat-history-group { display: grid; gap: 2px; }
+        .chat-history-group h3 { margin: 3px 6px; color: var(--text-muted); font-size: 10px; font-weight: 600; }
+        .chat-history-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 3px; min-width: 0; }
+        .chat-history-open, .chat-history-delete { min-width: 0; padding: 6px 8px; border: 0; border-radius: 7px; color: var(--text-main); background: transparent; cursor: pointer; }
+        .chat-history-open { display: grid; gap: 1px; text-align: left; }
+        .chat-history-open:hover, .chat-history-delete:hover { background: var(--panel-bg); }
+        .chat-history-open span, .chat-history-open small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .chat-history-open small, .chat-history-empty, .chat-history-status { color: var(--text-muted); font-size: 10px; }
+        .chat-history-open[aria-current="true"] { background: var(--panel-bg); }
+        .chat-history-delete { width: 28px; color: var(--text-muted); }
+        .chat-history-empty, .chat-history-status { margin: 0; }
+        .chat-backup-actions { display: grid; gap: 7px; }
+        .chat-backup-actions button { width: 100%; }
+        .chat-backup-file { display: none; }
+        .conversation-switch-dialog { width: min(430px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--border); border-radius: 14px; color: var(--text-main); background: var(--panel-bg); }
+        .conversation-switch-dialog::backdrop { background: rgba(15, 23, 42, .55); }
+        .conversation-switch-dialog h2 { margin: 0 0 8px; font-size: 17px; }
+        .conversation-switch-dialog p { margin: 0 0 14px; color: var(--text-muted); font-size: 13px; }
+        .conversation-switch-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+        .conversation-switch-actions button { min-height: 34px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); background: var(--panel-muted); cursor: pointer; }
+        .conversation-switch-actions button:disabled { cursor: not-allowed; opacity: .55; }
+
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-heading {
+            padding: 0 4px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .source-menu > summary { cursor: pointer; list-style: none; }
+        .source-menu > summary::-webkit-details-marker { display: none; }
+        .source-menu > summary span { margin-left: auto; color: var(--accent); font-size: 10px; letter-spacing: normal; text-transform: none; }
+
+        .dataset-picker, .search-picker {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        .dataset-picker legend, .search-picker legend { display: none; }
+        .dataset-groups { display: grid; gap: 9px; }
+        .dataset-group h3 { margin: 2px 4px; color: var(--text-muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+        .dataset-group > div { display: flex; flex-direction: column; gap: 4px; }
+        .dataset-watermark { display: block; color: var(--accent); font-size: 9px; letter-spacing: .08em; }
+        .dataset-name { display: block; font-size: 12px; overflow-wrap: anywhere; }
+        .dataset-status { max-height: 2.8em; overflow: hidden; }
+        .dataset-empty { padding: 5px 8px; color: var(--text-muted); font-size: 11px; }
+
+        .dataset-option, .search-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            min-height: 38px;
+            padding: 8px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: var(--text-main);
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .dataset-option:has(input:checked), .search-option:has(input:checked) {
+            background: var(--panel-bg);
+            border-color: var(--border);
+        }
+
+        .dataset-option > span { min-width: 0; }
+        .dataset-option-select { display: flex; min-width: 0; flex: 1; align-items: flex-start; gap: 9px; cursor: pointer; }
+        .dataset-option input, .search-option input { margin: 4px 0 0; accent-color: var(--accent); }
+        .dataset-remove-button, .dataset-trash-action { flex: 0 0 auto; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); background: transparent; font-size: 11px; cursor: pointer; }
+        .dataset-remove-button:hover, .dataset-trash-delete:hover { color: #ff8b8b; border-color: #9b4848; }
+        .dataset-trash { margin-top: 8px; }
+        .dataset-trash > summary { cursor: pointer; color: var(--text-muted); font-size: 11px; }
+        .dataset-trash > summary span { color: var(--accent); }
+        .dataset-trash-list { display: grid; gap: 5px; padding-top: 6px; }
+        .dataset-trash-option { display: flex; min-width: 0; align-items: center; gap: 5px; padding: 5px 2px; }
+        .dataset-trash-name { min-width: 0; flex: 1; overflow-wrap: anywhere; font-size: 11px; }
+        .dataset-trash-delete { color: #d87575; }
+        .dataset-trash-empty { color: var(--text-muted); font-size: 10px; }
+        .dataset-status { display: block; margin-top: 2px; color: var(--text-muted); font-size: 10px; font-weight: 400; overflow-wrap: anywhere; }
+        .dataset-help, .search-help { color: var(--text-muted); font-size: 11px; }
+        .search-option { min-height: 34px; padding: 6px 8px; }
+        .search-option span { font-size: 13px; }
+        #api-dataset-options { display: flex; flex-direction: column; gap: 5px; }
+        .dataset-import { margin-top: 5px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); }
+        .dataset-import summary { cursor: pointer; font-size: 12px; font-weight: 600; }
+        .dataset-import form { display: grid; gap: 7px; padding-top: 9px; }
+        .dataset-import-progress { display: grid; gap: 4px; }
+        .dataset-import-progress[hidden] { display: none; }
+        .dataset-import-progress progress { width: 100%; height: 10px; accent-color: var(--accent); }
+        .dataset-import-progress span { color: var(--text-muted); font-size: 10px; overflow-wrap: anywhere; }
+        .dataset-import-progress.failed progress { accent-color: #d87575; }
+        .dataset-import label { display: grid; gap: 3px; color: var(--text-muted); font-size: 11px; }
+        .dataset-import input, .dataset-import select { width: 100%; min-width: 0; padding: 7px; border: 1px solid var(--border); border-radius: 7px; color: var(--text-main); background: var(--app-bg); }
+        .dataset-import textarea { width: 100%; min-width: 0; padding: 7px; border: 1px solid var(--border); border-radius: 7px; color: var(--text-main); background: var(--app-bg); font: inherit; resize: vertical; }
+        .dataset-import button { padding: 8px; border: 0; border-radius: 7px; color: var(--text-main); background: #373321; cursor: pointer; }
+        .dataset-import-status { margin: 0; color: var(--text-muted); font-size: 11px; overflow-wrap: anywhere; }
+
+        .sidebar-spacer { flex: 1; }
+        .sidebar-footer { padding-top: 8px; border-top: 1px solid var(--border); }
+        .profile-button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; border: 0; border-radius: 10px; color: var(--text-main); background: transparent; text-align: left; cursor: pointer; }
+        .profile-avatar { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; color: var(--text-main); background: #51482a; }
+
+        .main-panel { display: flex; min-width: 0; min-height: 0; flex-direction: column; height: 100%; overflow: hidden; }
+        .topbar { min-height: 56px; padding: 8px 22px; }
+        .model-label { color: var(--text-muted); font-size: 13px; }
+        .topbar-actions { display: flex; gap: 4px; }
+
+        .conversation {
+            position: relative;
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .welcome {
+            display: flex;
+            flex: 1;
+            width: min(100%, 820px);
+            flex-direction: column;
+            justify-content: center;
+            padding: 28px 24px 8px;
+            text-align: center;
+        }
+
+        .welcome h1 { margin: 0 0 8px; color: var(--text-main); font-size: clamp(27px, 4vw, 36px); font-weight: 600; letter-spacing: -.04em; }
+        .welcome p { margin: 0; color: var(--text-muted); }
+
+        #chatbox {
+            display: none;
+            width: min(100%, 820px);
+            height: auto;
+            flex: 1;
+            margin: 0;
+            padding: 18px 24px 24px;
+            overflow-y: auto;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            scroll-behavior: smooth;
+        }
+
+        .conversation.has-messages .welcome { display: none; }
+        .conversation.has-messages #chatbox { display: block; }
+        .user-msg, .ai-msg { padding: 13px 15px; border: 1px solid var(--border); border-radius: 16px; }
+        .user-msg { width: fit-content; max-width: 86%; margin: 16px 0 16px auto; color: var(--text-main); background: var(--panel-muted); }
+        .ai-msg { max-width: 100%; margin: 16px 0 22px; color: var(--text-main); background: var(--panel-bg); }
+        .ai-msg b { color: var(--text-main); }
+        .source-list { border-color: var(--border); }
+        .source-list a { color: var(--text-main); }
+        .source-list small { color: var(--text-muted); }
+
+        .composer-wrap { flex: 0 0 auto; width: min(100%, 860px); margin: 0 auto; padding: 10px 24px max(16px, env(safe-area-inset-bottom)); }
+        .input-area { display: block; }
+        .composer {
+            padding: 10px 12px 8px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--panel-bg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+        }
+        #user-input { display: block; width: 100%; min-height: 54px; max-height: 180px; padding: 9px 8px; resize: vertical; border: 0; outline: 0; color: var(--text-main); background: transparent; font-size: 15px; }
+        #user-input::placeholder { color: var(--text-muted); }
+        .composer-toolbar { justify-content: flex-end; }
+        .composer-hint { margin-right: auto; padding-left: 8px; color: var(--text-muted); font-size: 11px; }
+        .composer-action { min-width: 32px; min-height: 30px; padding: 4px 8px; color: var(--text-muted); font-size: 12px; }
+        .send-button { min-width: 48px; color: var(--text-main); background: #373321; font-size: 12px; font-weight: 600; }
+        .search-menu { position: relative; }
+        .search-menu > summary { display: inline-flex; min-height: 30px; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); background: var(--panel-bg); font-size: 12px; cursor: pointer; list-style: none; white-space: nowrap; }
+        .search-menu > summary::-webkit-details-marker { display: none; }
+        .search-menu[open] > summary { color: var(--text-main); border-color: var(--accent); }
+        .search-menu-popover { position: absolute; z-index: 5; right: 0; bottom: calc(100% + 8px); width: 230px; padding: 9px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+        .search-menu-popover .search-option { min-height: 32px; }
+        .search-menu-popover .search-help { display: block; padding: 6px 8px 2px; }
+        .generation-stats { display: none; gap: 12px; margin: 0 0 0 48px; color: var(--text-muted); font-size: 11px; }
+        body[data-show-stats="true"] .generation-stats { display: flex; flex-wrap: wrap; }
+        .model-runtime-note { margin: 6px 0 0; color: var(--text-muted); font-size: 11px; }
+        .settings-dialog { box-shadow: 0 18px 54px rgba(0, 0, 0, .16); }
+        .settings-heading { padding-block: 12px; }
+        .settings-tabs { gap: 3px; padding: 10px 8px; }
+        .settings-tab { padding: 8px 9px; font-size: 13px; }
+        .settings-content { padding: 14px 18px; }
+        .setting-row { padding: 10px 0; }
+        .setting-copy strong { font-size: 13px; }
+        .setting-copy small { font-size: 11px; line-height: 1.45; }
+        .settings-footer { padding-block: 10px; }
+        .secondary-button, .primary-button { padding: 6px 9px; font-size: 12px; }
+        .send-button:hover { background: #4b442c; }
+        .composer-note { margin: 8px 0 0; color: var(--text-muted); font-size: 11px; text-align: center; }
+
+        .settings-backdrop { position: fixed; z-index: 20; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15, 23, 42, .42); }
+        .settings-backdrop.open { display: flex; }
+        .settings-dialog { display: flex; width: min(900px, 100%); max-height: min(760px, 92vh); flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; color: var(--text-main); background: var(--panel-bg); box-shadow: 0 24px 80px rgba(0, 0, 0, .2); }
+        .settings-heading { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .settings-heading h2 { margin: 0; color: var(--text-main); font-size: 18px; }
+        .settings-body { display: grid; min-height: 0; grid-template-columns: 190px minmax(0, 1fr); }
+        .settings-tabs { display: flex; flex-direction: column; gap: 5px; padding: 14px 10px; border-right: 1px solid var(--border); background: var(--panel-muted); }
+        .settings-tab { padding: 9px 10px; border: 0; border-radius: 8px; color: var(--text-muted); background: transparent; text-align: left; cursor: pointer; }
+        .settings-tab[aria-selected="true"] { color: var(--text-main); background: var(--panel-bg); font-weight: 600; }
+        .settings-content { min-height: 0; padding: 20px; overflow-y: auto; }
+        .settings-panel { display: none; }
+        .settings-panel.active { display: block; }
+        .setting-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .setting-copy { max-width: 480px; }
+        .setting-copy strong { display: block; font-size: 14px; }
+        .setting-copy small { display: block; margin-top: 4px; color: var(--text-muted); font-size: 12px; }
+        .setting-control { min-width: 155px; max-width: 240px; }
+        .setting-control select, .setting-control input[type="number"], .setting-control input[type="text"],
+        .setting-control input[type="password"], .setting-control textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); background: var(--panel-bg); }
+        .setting-control textarea { min-height: 90px; resize: vertical; }
+        .setting-control input[type="range"] { width: 100%; accent-color: var(--accent); }
+        .toggle { width: 42px; height: 24px; accent-color: var(--accent); }
+        .settings-footer { padding: 12px 20px; border-top: 1px solid var(--border); }
+        .settings-footer small { color: var(--text-muted); }
+        .secondary-button { padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); cursor: pointer; }
+        .primary-button { padding: 8px 12px; border: 1px solid #5a502e; border-radius: 8px; color: var(--text-main); background: #373321; cursor: pointer; }
+        .settings-actions { display: flex; gap: 8px; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+        :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+        body[data-theme="dark"] { color-scheme: dark; --app-bg: #212121; --panel-bg: #2b2b2b; --panel-muted: #171717; --text-main: #fff0a6; --text-muted: #e2d59a; --border: #514a32; --accent: #ffe58a; --focus: #fff3b8; }
+        body[data-theme="light"] { color-scheme: dark; --app-bg: #28271f; --panel-bg: #343126; --panel-muted: #201f19; --text-main: #fff0a6; --text-muted: #e2d59a; --border: #5a5236; --accent: #ffe58a; --focus: #fff3b8; }
+        @media (prefers-color-scheme: light) {
+            body[data-theme="system"] { color-scheme: dark; --app-bg: #28271f; --panel-bg: #343126; --panel-muted: #201f19; --text-main: #fff0a6; --text-muted: #e2d59a; --border: #5a5236; --accent: #ffe58a; --focus: #fff3b8; }
+        }
+        body[data-theme="high-contrast"] { color-scheme: dark; --app-bg: #000; --panel-bg: #000; --panel-muted: #101010; --text-main: #fff4a8; --text-muted: #fff0a6; --border: #fff0a6; --accent: #ffeb70; --focus: #ffeb70; }
+        body[data-font-size="large"] { font-size: 18px; }
+        body[data-font-size="large"] .dataset-status, body[data-font-size="large"] .setting-copy small { font-size: 13px; }
+        body[data-reduced-motion="true"] *, body[data-reduced-motion="true"] *::before, body[data-reduced-motion="true"] *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        body.sidebar-collapsed .app-shell { grid-template-columns: 0 minmax(0, 1fr); }
+        body.sidebar-collapsed .sidebar { visibility: hidden; padding: 0; overflow: hidden; }
+
+        @media (max-width: 760px) {
+            body { height: 100dvh; }
+            .app-shell { grid-template-columns: minmax(0, 1fr); }
+            .sidebar { position: fixed; z-index: 10; inset: 0 auto 0 0; width: min(300px, 86vw); transform: translateX(-105%); transition: transform .2s ease; box-shadow: 10px 0 32px rgba(0, 0, 0, .12); }
+            body.mobile-sidebar-open .sidebar { transform: translateX(0); visibility: visible; }
+            body.sidebar-collapsed .sidebar { display: flex; }
+            .topbar { padding-inline: 12px; }
+            .composer-wrap { padding-inline: 12px; }
+            #chatbox { padding-inline: 14px; }
+            .settings-body { grid-template-columns: 1fr; }
+            .settings-tabs { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+            .settings-tab { flex: 0 0 auto; }
+            .settings-content { padding: 12px 16px; }
+            .setting-row { flex-direction: column; gap: 8px; }
+            .setting-control { width: 100%; max-width: none; }
+            .settings-backdrop { padding: 8px; }
+            .settings-dialog { max-height: 96vh; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        }
+        .settings-heading { padding: 12px 20px; }
+        .settings-tabs { gap: 3px; padding: 10px 8px; }
+        .settings-tab { padding: 8px 9px; font-size: 13px; }
+        .settings-content { padding: 14px 18px; }
+        .setting-row { padding: 10px 0; }
+        .setting-copy strong { font-size: 13px; }
+        .setting-copy small { font-size: 11px; line-height: 1.45; }
+        .settings-footer { padding: 10px 20px; }
+        .secondary-button, .primary-button { padding: 6px 9px; font-size: 12px; }
+        .icon-button { width: 32px; height: 32px; }
+    </style>
+</head>
+
+<body data-theme="dark">
+
+    <div class="app-shell">
+        <aside class="sidebar" id="app-sidebar" aria-label="Main navigation and sources">
+            <div class="brand-row">
+                <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><span>Combat AI</span></div>
+                <button class="icon-button" id="collapse-sidebar" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">‹</button>
+            </div>
+            <button class="new-chat-button" id="new-chat" type="button">＋&nbsp; New chat</button>
+            <button class="sidebar-link" id="search-conversations" type="button">⌕&nbsp; Search this chat</button>
+            <details class="chat-history" id="chat-history">
+                <summary>Saved chats <span class="chat-history-count" id="chat-history-count">0</span></summary>
+                <label class="sr-only" for="chat-history-search">Search saved chats</label>
+                <input class="chat-history-search" id="chat-history-search" type="search" placeholder="Search saved chats…" autocomplete="off">
+                <div class="chat-history-list" id="chat-history-list" aria-live="polite"></div>
+                <p class="chat-history-status" id="chat-history-status" role="status" aria-live="polite"></p>
+            </details>
+
+            <details class="sidebar-section source-menu" id="source-menu" open>
+                <summary class="section-heading">Data selection <span id="selected-source-count">0 selected</span></summary>
+                <div class="dataset-groups">
+                    <section class="dataset-group">
+                        <h3>Local datasets</h3>
+                        <div id="local-dataset-options"></div>
+                    </section>
+                    <section class="dataset-group">
+                        <h3>Online API datasets</h3>
+                        <div id="api-dataset-options"></div>
+                    </section>
+                </div>
+                <details class="dataset-trash" id="dataset-trash">
+                    <summary>Recycle bin <span id="dataset-trash-count">0</span></summary>
+                    <div class="dataset-trash-list" id="dataset-trash-list"></div>
+                </details>
+                <p class="dataset-help" id="dataset-help">Choose one or more validated datasets for grounded answers.</p>
+                <details class="dataset-import">
+                    <summary>＋ Local Data</summary>
+                    <details class="dataset-import">
+                        <summary>Text</summary>
+                        <form id="text-import-form">
+                            <p class="dataset-help">TEXT = I already have readable text. Paste it here or choose a .txt / .md file.</p>
+                            <label>Dataset name <span>(optional; generated if blank)</span><input id="text-dataset-name" maxlength="100" placeholder="Book_Title_Chapter_01"></label>
+                            <label>Scenario / use case<input id="text-dataset-scenario" maxlength="500" value="General reference"></label>
+                            <label>Paste text<textarea id="text-dataset-content" maxlength="5000000" rows="4" placeholder="Paste notes, a chapter, or other source text."></textarea></label>
+                            <label>Or choose a .txt / .md file<input id="text-dataset-file" type="file" accept=".txt,.md,text/plain,text/markdown"></label>
+                            <button type="submit">Validate, embed &amp; add</button>
+                            <div class="dataset-import-progress" id="text-import-progress" hidden><progress max="100"></progress><span></span></div>
+                            <p class="dataset-import-status" id="text-import-status" role="status" aria-live="polite"></p>
+                        </form>
+                    </details>
+                    <details class="dataset-import">
+                        <summary>Embedded</summary>
+                        <form id="local-embedded-form">
+                            <p class="dataset-help">EMBEDDED = I already have vectors. They are validated and stored without re-embedding.</p>
+                            <label>Embedding dataset (.json)<input id="local-embedded-file" type="file" accept=".json,application/json" required></label>
+                            <label>Scenario / use case<input id="local-embedded-scenario" maxlength="500" value="General reference"></label>
+                            <button type="submit">Validate &amp; add without re-embedding</button>
+                            <div class="dataset-import-progress" id="local-embedded-progress" hidden><progress max="100"></progress><span></span></div>
+                            <p class="dataset-help">JSON shape: { "embedding_model": "all-MiniLM-L6-v2", "passages": [{"text":"..."}], "embeddings": [[384 numbers]] }.</p>
+                            <p class="dataset-import-status" id="local-embedded-status" role="status" aria-live="polite"></p>
+                        </form>
+                    </details>
+                    <details class="dataset-import">
+                        <summary>Pages</summary>
+                        <form id="local-pages-form">
+                            <p class="dataset-help">PAGES = I have scanned pages, images, or a PDF. OCR extracts the text before indexing.</p>
+                            <label>Local folder or file path<input id="local-pages-source" required placeholder="C:\Books\Manual or C:\Books\page-01.pdf"></label>
+                            <label>Page type<select id="local-pages-type"><option value="single">Single Page</option><option value="double">Double Page spread</option></select></label>
+                            <label>Dataset name <span>(optional)</span><input id="local-pages-name" maxlength="100" placeholder="Technical_Manual_2026"></label>
+                            <label>Scenario / use case<input id="local-pages-scenario" maxlength="500" value="General reference"></label>
+                            <button type="submit">OCR, embed &amp; add</button>
+                            <div class="dataset-import-progress" id="local-pages-progress" hidden><progress max="100"></progress><span></span></div>
+                            <p class="dataset-import-status" id="local-pages-status" role="status" aria-live="polite"></p>
+                        </form>
+                    </details>
+                </details>
+                <details class="dataset-import">
+                    <summary>＋ Online API Data</summary>
+                    <details class="dataset-import">
+                        <summary>Text</summary>
+                        <form id="api-text-form">
+                            <label>API / data URL<input id="api-text-source" type="url" required placeholder="https://api.example.com/documents"></label>
+                            <label>API key <span>(optional; sent as Bearer token, not saved)</span><input id="api-text-key" type="password" autocomplete="off"></label>
+                            <label>Dataset name <span>(optional)</span><input id="api-text-name" maxlength="100" placeholder="API_Topic_Name"></label>
+                            <label>Scenario / use case<input id="api-text-scenario" maxlength="500" value="General reference"></label>
+                            <button type="submit">Fetch, validate, embed &amp; add</button>
+                            <div class="dataset-import-progress" id="api-text-progress" hidden><progress max="100"></progress><span></span></div>
+                            <p class="dataset-import-status" id="api-text-status" role="status" aria-live="polite"></p>
+                        </form>
+                    </details>
+                    <details class="dataset-import">
+                        <summary>Embedded</summary>
+                        <form id="api-embedded-form">
+                            <label>API URL returning passages and embeddings<input id="api-embedded-source" type="url" required placeholder="https://api.example.com/embeddings"></label>
+                            <label>API key <span>(optional; not saved)</span><input id="api-embedded-key" type="password" autocomplete="off"></label>
+                            <label>Dataset name <span>(optional)</span><input id="api-embedded-name" maxlength="100" placeholder="API_Topic_Name"></label>
+                            <label>Scenario / use case<input id="api-embedded-scenario" maxlength="500" value="General reference"></label>
+                            <button type="submit">Validate &amp; add without re-embedding</button>
+                            <div class="dataset-import-progress" id="api-embedded-progress" hidden><progress max="100"></progress><span></span></div>
+                            <p class="dataset-help">The endpoint must return passages/documents, embeddings/vectors and the compatible all-MiniLM-L6-v2 model.</p>
+                            <p class="dataset-import-status" id="api-embedded-status" role="status" aria-live="polite"></p>
+                        </form>
+                    </details>
+                    <details class="dataset-import">
+                        <summary>Pages / API Link</summary>
+                        <form id="api-pages-form">
+                            <label>Online page, image or PDF URL<input id="api-pages-source" type="url" required placeholder="https://example.com/manual.pdf"></label>
+                            <label>API key <span>(optional; not saved)</span><input id="api-pages-key" type="password" autocomplete="off"></label>
+                            <label>Page type<select id="api-pages-type"><option value="single">Single Page</option><option value="double">Double Page spread</option></select></label>
+                            <label>Dataset name <span>(optional)</span><input id="api-pages-name" maxlength="100" placeholder="Technical_Manual_2026"></label>
+                            <label>Scenario / use case<input id="api-pages-scenario" maxlength="500" value="General reference"></label>
+                            <button type="submit">Fetch, OCR, embed &amp; add</button>
+                            <div class="dataset-import-progress" id="api-pages-progress" hidden><progress max="100"></progress><span></span></div>
+                            <p class="dataset-import-status" id="api-pages-status" role="status" aria-live="polite"></p>
+                        </form>
+                    </details>
+                </details>
+            </details>
+
+            <div class="sidebar-spacer"></div>
+            <div class="sidebar-footer">
+                <button class="profile-button" id="open-settings" type="button">
+                    <span class="profile-avatar" aria-hidden="true">U</span>
+                    <span>Settings &amp; customization</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-panel">
+            <header class="topbar">
+                <div class="topbar-actions">
+                    <button class="icon-button" id="open-sidebar" type="button" aria-label="Open navigation" title="Open navigation">☰</button>
+                    <span class="model-label">AI Brain <span aria-hidden="true">·</span> local RAG</span>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-button" id="export-chat" type="button" aria-label="Export conversation" title="Export conversation">⇩</button>
+                    <button class="icon-button" id="settings-shortcut" type="button" aria-label="Open settings" title="Settings">⚙</button>
+                </div>
+            </header>
+
+            <section class="conversation" id="conversation">
+                <div class="welcome" id="welcome">
+                    <h1>What would you like to know?</h1>
+                    <p>Ask your selected sources, search the live web, or combine both.</p>
+                </div>
+                <div id="chatbox" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Conversation"></div>
+            </section>
+
+            <div class="composer-wrap">
+                <form class="input-area" onsubmit="sendMessage(event)">
+                    <div class="composer">
+                        <label class="sr-only" for="user-input">Message Combat AI</label>
+                        <textarea id="user-input" placeholder="Message Combat AI..." rows="2"></textarea>
+                        <div class="composer-toolbar">
+                            <span class="composer-hint" id="composer-hint">Enter to send · Shift+Enter for a new line</span>
+                            <button class="composer-action" id="clear-chat" type="button" aria-label="Clear conversation" title="Clear conversation">Clear</button>
+                            <details class="search-menu" id="search-menu">
+                                <summary id="search-mode-label" aria-label="Select search mode">Local only⌄</summary>
+                                <div class="search-menu-popover">
+                                    <fieldset class="search-picker" aria-describedby="search-help">
+                                        <legend>Select how answers are sourced</legend>
+                                        <label class="search-option">
+                                            <input type="radio" name="search-mode" value="local" checked>
+                                            <span>Local sources only</span>
+                                        </label>
+                                        <label class="search-option">
+                                            <input type="radio" name="search-mode" value="mixed">
+                                            <span>Local sources + live web</span>
+                                        </label>
+                                        <label class="search-option">
+                                            <input type="radio" name="search-mode" value="web">
+                                            <span>Live web only</span>
+                                        </label>
+                                        <span class="search-help" id="search-help">Choose local data, current web results, or both.</span>
+                                    </fieldset>
+                                </div>
+                            </details>
+                            <button class="composer-action send-button" type="submit">Send</button>
+                        </div>
+                    </div>
+                    <p class="composer-note">AI can make mistakes. Check important information against the cited sources.</p>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <dialog class="conversation-switch-dialog" id="conversation-switch-dialog" aria-labelledby="conversation-switch-title" aria-describedby="conversation-switch-description">
+        <h2 id="conversation-switch-title">Switch conversation?</h2>
+        <p id="conversation-switch-description">Save this conversation before switching? Cancel keeps it open and unchanged.</p>
+        <div class="conversation-switch-actions">
+            <button id="save-and-switch-chat" type="button">Save &amp; continue</button>
+            <button id="discard-and-switch-chat" type="button">Discard &amp; continue</button>
+            <button id="cancel-switch-chat" type="button">Cancel</button>
+        </div>
+    </dialog>
+
+    <div class="settings-backdrop" id="settings-backdrop">
+        <section class="settings-dialog" id="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-describedby="settings-summary" tabindex="-1">
+            <div class="settings-heading">
+                <div><h2 id="settings-title">Settings</h2><span class="sr-only" id="settings-summary">Customize appearance, accessibility, and answer behavior.</span></div>
+                <button class="icon-button" id="close-settings" type="button" aria-label="Close settings">×</button>
+            </div>
+            <div class="settings-body">
+                <nav class="settings-tabs" role="tablist" aria-label="Settings sections" aria-orientation="vertical">
+                    <button class="settings-tab" id="tab-general" role="tab" aria-selected="true" aria-controls="panel-general" type="button">General</button>
+                    <button class="settings-tab" id="tab-accessibility" role="tab" aria-selected="false" aria-controls="panel-accessibility" type="button" tabindex="-1">Accessibility</button>
+                    <button class="settings-tab" id="tab-answer" role="tab" aria-selected="false" aria-controls="panel-answer" type="button" tabindex="-1">Answer behavior</button>
+                    <button class="settings-tab" id="tab-model" role="tab" aria-selected="false" aria-controls="panel-model" type="button" tabindex="-1">Model &amp; stats</button>
+                    <button class="settings-tab" id="tab-data" role="tab" aria-selected="false" aria-controls="panel-data" type="button" tabindex="-1">Data &amp; privacy</button>
+                    <button class="settings-tab" id="tab-about" role="tab" aria-selected="false" aria-controls="panel-about" type="button" tabindex="-1">About</button>
+                </nav>
+                <div class="settings-content">
+                    <section class="settings-panel active" id="panel-general" role="tabpanel" aria-labelledby="tab-general" tabindex="0">
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Color theme</strong><small>Choose a comfortable light, dark, or high-contrast interface.</small></div>
+                            <div class="setting-control"><select id="setting-theme" aria-label="Color theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option><option value="high-contrast">High contrast</option></select></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Send message on Enter</strong><small>When off, use Ctrl/Cmd+Enter to send; Enter inserts a new line.</small></div>
+                            <input class="toggle" id="setting-enter-send" type="checkbox" role="switch" aria-label="Send message on Enter">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Save conversations on this device</strong><small>Saved chats stay in this browser. Recent turns are also sent to the configured AI endpoint as context for answers. Turning saving off keeps existing chats but stops saving new changes.</small></div>
+                            <input class="toggle" id="setting-save-history" type="checkbox" role="switch" aria-label="Save conversations on this device">
+                        </div>
+                    </section>
+                    <section class="settings-panel" id="panel-accessibility" role="tabpanel" aria-labelledby="tab-accessibility" tabindex="0" hidden>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Text size</strong><small>Increase the interface text size for easier reading.</small></div>
+                            <div class="setting-control"><select id="setting-font-size" aria-label="Text size"><option value="normal">Default</option><option value="large">Large</option></select></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Reduce motion</strong><small>Minimize transitions and animated scrolling.</small></div>
+                            <input class="toggle" id="setting-reduced-motion" type="checkbox" role="switch" aria-label="Reduce motion">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Keep keyboard focus visible</strong><small>Focus rings are always enabled for keyboard navigation.</small></div>
+                            <span aria-label="Always on">Always on</span>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Keyboard shortcuts</strong><small>Ctrl/Cmd+Shift+O starts a new chat. Escape closes dialogs. Tab moves through controls.</small></div>
+                            <span aria-hidden="true">⌨</span>
+                        </div>
+                    </section>
+                    <section class="settings-panel" id="panel-answer" role="tabpanel" aria-labelledby="tab-answer" tabindex="0" hidden>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Answer style</strong><small>Choose how concise the AI response should be.</small></div>
+                            <div class="setting-control"><select id="setting-answer-style" aria-label="Answer style"><option value="concise">Concise</option><option value="balanced">Balanced</option><option value="detailed">Detailed</option></select></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Creativity</strong><small>Lower values favor focused, evidence-based answers.</small></div>
+                            <div class="setting-control"><input id="setting-temperature" type="range" min="0" max="1" step="0.05" value="0.15"><output id="temperature-value" for="setting-temperature">0.15</output></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Answer instructions</strong><small>Optional extra guidance applied to the answer. Source evidence and safety rules remain in effect.</small></div>
+                            <div class="setting-control"><textarea id="setting-instructions" aria-label="Answer instructions" maxlength="1200" placeholder="e.g. Prefer plain language and define technical terms."></textarea></div>
+                        </div>
+                    </section>
+                    <section class="settings-panel" id="panel-model" role="tabpanel" aria-labelledby="tab-model" tabindex="0" hidden>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Model ID</strong><small>Choose a model exposed by the configured chat server. The server URL and credentials remain configured on the backend.</small></div>
+                            <div class="setting-control">
+                                <input id="setting-model-id" type="text" list="available-models" maxlength="200" autocomplete="off" aria-label="Model ID">
+                                <datalist id="available-models"></datalist>
+                                <button class="secondary-button" id="refresh-models" type="button">Refresh models</button>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Maximum response tokens</strong><small>Upper limit for generated answer length; the configured model may enforce a lower context limit.</small></div>
+                            <div class="setting-control"><input id="setting-max-tokens" type="number" min="1" max="8192" step="1" aria-label="Maximum response tokens"></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Show generation statistics</strong><small>Show prompt/completion tokens, tokens per second, and KV-cache reuse when the model server provides them.</small></div>
+                            <input class="toggle" id="setting-show-stats" type="checkbox" role="switch" aria-label="Show generation statistics">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Model server</strong><small id="model-server-status">Checking model server…</small></div>
+                            <button class="secondary-button" id="refresh-model-status" type="button">Refresh status</button>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>KV cache</strong><small id="kv-cache-status">Model-server cache information is not available yet.</small></div>
+                        </div>
+                    </section>
+                    <section class="settings-panel" id="panel-data" role="tabpanel" aria-labelledby="tab-data" tabindex="0" hidden>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Chat backup file</strong><small>Download all saved chats and the current conversation, including messages, source links, and generation stats. Restore the JSON file later to move chats. Browser storage has a device-specific capacity, so keep a backup somewhere safe.</small></div>
+                            <div class="setting-control chat-backup-actions">
+                                <button class="secondary-button" id="download-chat-backup" type="button">Download all chats</button>
+                                <button class="secondary-button" id="restore-chat-backup" type="button">Restore chat file</button>
+                                <input class="chat-backup-file" id="chat-backup-file" type="file" accept=".json,application/json">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Current conversation</strong><small>Download just the chat currently open as JSON.</small></div>
+                            <div class="setting-control"><button class="secondary-button" id="export-settings-chat" type="button">Export chat</button></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Clear saved chats</strong><small>This removes saved conversations and the current chat draft from this browser. It does not delete embedded datasets.</small></div>
+                            <div class="setting-control"><button class="secondary-button" id="clear-saved-chat" type="button">Clear saved chats</button></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-copy"><strong>Data sources</strong><small>Selected datasets are queried in their own configured vector collection or namespace. Live search runs only in the selected search mode.</small></div>
+                        </div>
+                    </section>
+                    <section class="settings-panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" tabindex="0" hidden>
+                        <div class="setting-row"><div class="setting-copy"><strong>Grounded Local AI</strong><small>Source-grounded answers, separate dataset indexes, and optional live web search. Your API keys stay on the server.</small></div></div>
+                        <div class="setting-row"><div class="setting-copy"><strong>Quick actions</strong><small>Ctrl/Cmd+Shift+O · New chat<br>Escape · Close settings<br>Ctrl/Cmd+Enter · Send</small></div></div>
+                    </section>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <small id="settings-status" role="status" aria-live="polite">Settings are saved in this browser.</small>
+                <div class="settings-actions">
+                    <button class="secondary-button" id="reset-settings" type="button">Reset defaults</button>
+                    <button class="primary-button" id="save-settings" type="button">Save settings</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // UNIVERSAL ORIGIN: Automatically scales targets to match whatever IP loaded this site
+
+        const currentHost = window.location.hostname;
+        const serverBaseURL = (currentHost === "localhost" || currentHost === "127.0.0.1")
+            ? "http://127.0.0.1:8080"
+            : window.location.origin;
+
+        const datasetPreparation = new Map();
+        const datasetStatuses = new Map();
+        const modelLabel = document.querySelector('.model-label');
+        let currentModelStatus = null;
+        const SETTINGS_KEY = 'combat-ai-settings-v1';
+        const SOURCES_KEY = 'combat-ai-selected-sources-v1';
+        const CHAT_KEY = 'combat-ai-chat-v1';
+        const CHAT_ARCHIVE_KEY = 'combat-ai-chat-archive-v1';
+        const ACTIVE_CONVERSATION_KEY = 'combat-ai-active-conversation-v1';
+        const defaultSettings = {
+            theme: 'dark',
+            enterToSend: false,
+            saveHistory: true,
+            fontSize: 'normal',
+            reducedMotion: false,
+            answerStyle: 'concise',
+            temperature: 0.15,
+            instructions: '',
+            modelId: '',
+            maxTokens: 512,
+            showStats: true
+        };
+
+        function readStoredJson(key, fallback) {
+            try {
+                const stored = localStorage.getItem(key);
+                return stored ? JSON.parse(stored) : fallback;
+            } catch (error) {
+                console.warn(`Could not read browser setting '${key}':`, error);
+                return fallback;
+            }
+        }
+
+        let appSettings = { ...defaultSettings, ...readStoredJson(SETTINGS_KEY, {}) };
+        if (!['dark', 'light', 'system', 'high-contrast'].includes(appSettings.theme)) appSettings.theme = 'dark';
+        if (!['concise', 'balanced', 'detailed'].includes(appSettings.answerStyle)) appSettings.answerStyle = 'concise';
+        if (!['normal', 'large'].includes(appSettings.fontSize)) appSettings.fontSize = 'normal';
+        appSettings.temperature = Number.isFinite(Number(appSettings.temperature))
+            ? Math.max(0, Math.min(1, Number(appSettings.temperature)))
+            : defaultSettings.temperature;
+        appSettings.maxTokens = Number.isFinite(Number(appSettings.maxTokens))
+            ? Math.max(1, Math.min(8192, Math.trunc(Number(appSettings.maxTokens))))
+            : defaultSettings.maxTokens;
+        appSettings.modelId = typeof appSettings.modelId === 'string'
+            && appSettings.modelId.length <= 200
+            && !/[\u0000-\u001f]/.test(appSettings.modelId)
+            ? appSettings.modelId
+            : '';
+        let chatArchive = normalizeConversations(readStoredJson(CHAT_ARCHIVE_KEY, []));
+        let currentConversationId = appSettings.saveHistory
+            ? readStoredJson(ACTIVE_CONVERSATION_KEY, null)
+            : null;
+        let chatMessages = appSettings.saveHistory
+            ? readStoredJson(CHAT_KEY, [])
+            : [];
+        if (!Array.isArray(chatMessages)) chatMessages = [];
+        if (
+            typeof currentConversationId !== 'string'
+            || !chatArchive.some((conversation) => conversation.id === currentConversationId)
+        ) currentConversationId = null;
+        if (appSettings.saveHistory && !chatMessages.length && currentConversationId) {
+            chatMessages = chatArchive.find((conversation) => conversation.id === currentConversationId).messages;
+        }
+        let pendingConversationSwitch = null;
+        let settingsReturnFocus = null;
+        let isSending = false;
+        const storedSources = readStoredJson(SOURCES_KEY, []);
+        const savedSources = Array.isArray(storedSources) ? storedSources : [];
+        const savedSearchMode = readStoredJson('combat-ai-search-mode-v1', 'local');
+        const initialSearchMode = document.querySelector(`input[name="search-mode"][value="${savedSearchMode}"]`);
+        if (initialSearchMode) initialSearchMode.checked = true;
+
+        function selectedDatasetIds() {
+            return [...document.querySelectorAll('input[name="dataset-source"]:checked')]
+                .map((input) => input.value);
+        }
+
+        async function refreshModelStatus() {
+            try {
+                const response = await fetch(`${serverBaseURL}/model/status`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                currentModelStatus = data;
+                if (!appSettings.modelId) appSettings.modelId = data.models?.[0] || data.model;
+                const displayModel = (appSettings.modelId || data.model)
+                    .split(/[\\/]/)
+                    .pop()
+                    .replace(/\.gguf$/i, '')
+                    .replace(/_/g, ' ');
+                modelLabel.textContent = `${displayModel} · grounded answers`;
+                const datalist = document.getElementById('available-models');
+                datalist.replaceChildren(...(data.models || []).map((model) => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    return option;
+                }));
+                const status = document.getElementById('model-server-status');
+                if (status) status.textContent = data.status;
+                const kvStatus = document.getElementById('kv-cache-status');
+                if (kvStatus) {
+                    kvStatus.textContent = data.kv_cache
+                        ? `${data.kv_cache.cached_prompt_tokens} cached prompt tokens / ${data.kv_cache.capacity_tokens} context tokens. ${data.kv_cache_status}`
+                        : data.kv_cache_status;
+                }
+            } catch (error) {
+                currentModelStatus = null;
+                const displayModel = (appSettings.modelId || 'Configured model')
+                    .split(/[\\/]/)
+                    .pop()
+                    .replace(/\.gguf$/i, '')
+                    .replace(/_/g, ' ');
+                modelLabel.textContent = `${displayModel} · grounded answers`;
+                const status = document.getElementById('model-server-status');
+                if (status) status.textContent = `Could not read model status: ${error.message}`;
+                console.warn('Could not load configured model status:', error);
+            }
+        }
+        refreshModelStatus();
+
+        function updateSelectedSourceCount() {
+            const count = selectedDatasetIds().length;
+            document.getElementById('selected-source-count').textContent =
+                `${count} selected`;
+        }
+
+        async function activateImportedDataset(datasetId) {
+            const saved = readStoredJson(SOURCES_KEY, []);
+            const selected = Array.isArray(saved) ? saved : [];
+            if (!selected.includes(datasetId)) selected.push(datasetId);
+            try {
+                localStorage.setItem(SOURCES_KEY, JSON.stringify(selected));
+            } catch (error) {
+                console.warn('The imported dataset is ready, but its selection could not be saved:', error);
+            }
+            const localSearch = document.querySelector('input[name="search-mode"][value="local"]');
+            if (localSearch) {
+                localSearch.checked = true;
+                updateSearchMode();
+                try {
+                    localStorage.setItem('combat-ai-search-mode-v1', JSON.stringify('local'));
+                } catch (error) {
+                    console.warn('The imported dataset is ready, but local search mode could not be saved:', error);
+                }
+            }
+            await refreshDatasetStatus();
+            const checkbox = document.querySelector(
+                `input[name="dataset-source"][value="${CSS.escape(datasetId)}"]`
+            );
+            if (!checkbox) throw new Error('Dataset was added, but it is missing from the source list. Refresh the page to reload it.');
+            checkbox.checked = true;
+            updateSelectedSourceCount();
+            document.getElementById('user-input').focus();
+        }
+
+        function appendDatasetOption(container, id, dataset, selected) {
+            const row = document.createElement('div');
+            row.className = 'dataset-option';
+            const label = document.createElement('label');
+            label.className = 'dataset-option-select';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'dataset-source';
+            checkbox.value = id;
+            checkbox.checked = selected.has(id);
+            const details = document.createElement('span');
+            const sourceType = dataset.source_type || (dataset.scope === 'api' ? 'ONLINE_API' : 'LOCAL');
+            const dataType = dataset.data_type || (dataset.type || 'text').toUpperCase();
+            const stamp = `${sourceType === 'ONLINE_API' ? 'API' : 'LOCAL'} • ${dataType}`;
+            const title = document.createElement('strong');
+            title.className = 'dataset-watermark';
+            title.textContent = stamp;
+            const name = document.createElement('span');
+            name.className = 'dataset-name';
+            name.textContent = dataset.name || dataset.dataset_name || id;
+            const status = document.createElement('span');
+            status.className = 'dataset-status';
+            status.textContent = [
+                dataset.scenario || 'General reference',
+                dataset.source_path || dataset.source_url || dataset.source || '',
+                dataset.data_type === 'PAGES' ? `${dataset.page_count} pages` : '',
+                dataset.metadata?.items || dataset.items
+                    ? `${dataset.metadata?.items || dataset.items} passages`
+                    : '',
+                dataset.status || ''
+            ].filter(Boolean).join(' · ');
+            details.append(title, name, status);
+            label.append(checkbox, details);
+            row.appendChild(label);
+            if (dataset.managed) {
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'dataset-remove-button';
+                remove.textContent = '×';
+                remove.title = `Move ${name.textContent} to Trash`;
+                remove.setAttribute('aria-label', `Move ${name.textContent} to Trash`);
+                remove.addEventListener('click', () => moveDatasetToTrash(id, name.textContent));
+                row.appendChild(remove);
+            }
+            container.appendChild(row);
+            checkbox.addEventListener('change', () => {
+                try {
+                    localStorage.setItem(SOURCES_KEY, JSON.stringify(selectedDatasetIds()));
+                } catch (error) {
+                    console.warn('Could not save selected data sources:', error);
+                }
+                if (
+                    checkbox.checked &&
+                    sourceType === 'ONLINE_API' &&
+                    (dataset.metadata?.mode || dataset.mode) === 'text' &&
+                    (dataset.status ? dataset.status !== 'READY' : !dataset.indexed)
+                ) {
+                    prepareConfiguredApiDataset(id, status).catch((error) => {
+                        status.textContent = `Could not prepare API dataset: ${error.message}`;
+                    });
+                }
+                updateSelectedSourceCount();
+            });
+        }
+
+        async function datasetRequest(url, options = {}) {
+            const response = await fetch(`${serverBaseURL}${url}`, options);
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+            return data;
+        }
+
+        function forgetDatasetSelection(datasetId) {
+            const saved = readStoredJson(SOURCES_KEY, []);
+            const selected = Array.isArray(saved)
+                ? saved.filter((id) => id !== datasetId)
+                : [];
+            for (let index = savedSources.length - 1; index >= 0; index -= 1) {
+                if (savedSources[index] === datasetId) savedSources.splice(index, 1);
+            }
+            try {
+                localStorage.setItem(SOURCES_KEY, JSON.stringify(selected));
+            } catch (error) {
+                console.warn('Could not update saved dataset selection:', error);
+            }
+        }
+
+        async function moveDatasetToTrash(datasetId, datasetName) {
+            if (!window.confirm(`Move "${datasetName}" to the Recycle bin? You can restore it later.`)) return;
+            const help = document.getElementById('dataset-help');
+            try {
+                await datasetRequest(`/datasets/${encodeURIComponent(datasetId)}/trash`, { method: 'POST' });
+                forgetDatasetSelection(datasetId);
+                await refreshDatasetStatus();
+                help.textContent = `"${datasetName}" moved to the Recycle bin.`;
+            } catch (error) {
+                help.textContent = `Could not move dataset to Trash: ${error.message}`;
+                console.error('Could not move dataset to Trash:', error);
+            }
+        }
+
+        async function restoreTrashedDataset(datasetId, datasetName) {
+            const help = document.getElementById('dataset-help');
+            try {
+                await datasetRequest(
+                    `/datasets/trash/${encodeURIComponent(datasetId)}/restore`,
+                    { method: 'POST' }
+                );
+                await refreshDatasetStatus();
+                help.textContent = `"${datasetName}" restored. Select it to use it in chat.`;
+            } catch (error) {
+                help.textContent = `Could not restore dataset: ${error.message}`;
+                console.error('Could not restore dataset:', error);
+            }
+        }
+
+        async function permanentlyDeleteDataset(datasetId, datasetName) {
+            if (!window.confirm(`Permanently delete "${datasetName}" and its stored vectors? This cannot be undone.`)) return;
+            const help = document.getElementById('dataset-help');
+            try {
+                await datasetRequest(
+                    `/datasets/trash/${encodeURIComponent(datasetId)}`,
+                    { method: 'DELETE' }
+                );
+                await refreshDatasetStatus();
+                help.textContent = `"${datasetName}" was permanently deleted.`;
+            } catch (error) {
+                help.textContent = `Could not permanently delete dataset: ${error.message}`;
+                console.error('Could not permanently delete dataset:', error);
+            }
+        }
+
+        function renderDatasetTrash(datasets) {
+            const list = document.getElementById('dataset-trash-list');
+            const count = document.getElementById('dataset-trash-count');
+            list.replaceChildren();
+            count.textContent = String(datasets.length);
+            if (!datasets.length) {
+                const empty = document.createElement('span');
+                empty.className = 'dataset-trash-empty';
+                empty.textContent = 'Trash is empty';
+                list.appendChild(empty);
+                return;
+            }
+            for (const dataset of datasets) {
+                const id = dataset.dataset_id || dataset.id;
+                const name = dataset.name || dataset.dataset_name || id;
+                const row = document.createElement('div');
+                row.className = 'dataset-trash-option';
+                const label = document.createElement('span');
+                label.className = 'dataset-trash-name';
+                label.textContent = name;
+                const restore = document.createElement('button');
+                restore.type = 'button';
+                restore.className = 'dataset-trash-action';
+                restore.textContent = 'Restore';
+                restore.addEventListener('click', () => restoreTrashedDataset(id, name));
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'dataset-trash-action dataset-trash-delete';
+                remove.textContent = 'Delete';
+                remove.title = 'Permanently delete dataset and vectors';
+                remove.addEventListener('click', () => permanentlyDeleteDataset(id, name));
+                row.append(label, restore, remove);
+                list.appendChild(row);
+            }
+        }
+
+        async function refreshDatasetStatus() {
+            const response = await fetch(`${serverBaseURL}/datasets/status`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const trashResponse = await fetch(`${serverBaseURL}/datasets/trash`);
+            if (!trashResponse.ok) throw new Error(`Could not load recycle bin: HTTP ${trashResponse.status}`);
+            const trashData = await trashResponse.json();
+            datasetStatuses.clear();
+            for (const [id, dataset] of Object.entries(data.datasets || {})) {
+                datasetStatuses.set(id, dataset);
+            }
+            const available = new Set(Object.keys(data.datasets || {}));
+            const selected = new Set([
+                ...selectedDatasetIds(),
+                ...savedSources
+            ].filter((id) => available.has(id)));
+            for (const [scope, targetId] of [['local', 'local-dataset-options'], ['api', 'api-dataset-options']]) {
+                const container = document.getElementById(targetId);
+                container.replaceChildren();
+                for (const kind of ['text', 'embedded', 'pages']) {
+                    for (const dataset of data.groups?.[scope]?.[kind] || []) {
+                        appendDatasetOption(container, dataset.dataset_id || dataset.id, dataset, selected);
+                    }
+                }
+                if (!container.childElementCount) {
+                    const empty = document.createElement('span');
+                    empty.className = 'dataset-empty';
+                    empty.textContent = 'No validated datasets yet';
+                    container.appendChild(empty);
+                }
+            }
+            renderDatasetTrash(trashData.datasets || []);
+            updateSelectedSourceCount();
+        }
+
+        async function prepareConfiguredApiDataset(collection, statusElement) {
+            if (datasetPreparation.has(collection)) return datasetPreparation.get(collection);
+            const task = (async () => {
+                if (statusElement) statusElement.textContent = 'Preparing configured API dataset…';
+                try {
+                    const response = await fetch(`${serverBaseURL}/datasets/index`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ collection })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+                    if (statusElement) statusElement.textContent = `Ready · ${data.items} passages`;
+                    datasetStatuses.set(collection, {
+                        ...datasetStatuses.get(collection),
+                        indexed: true,
+                        status: 'READY'
+                    });
+                } finally {
+                    datasetPreparation.delete(collection);
+                }
+            })();
+            datasetPreparation.set(collection, task);
+            return task;
+        }
+
+        refreshDatasetStatus().catch((error) => {
+            document.getElementById('dataset-help').textContent = `Could not load datasets: ${error.message}`;
+            console.error('Could not load dataset catalog:', error);
+        });
+
+
+        function updateSearchMode() {
+            const mode = document.querySelector('input[name="search-mode"]:checked').value;
+            const inputField = document.getElementById('user-input');
+            const modeLabel = {
+                local: 'Local only⌄',
+                mixed: 'Local + web⌄',
+                web: 'Web only⌄'
+            }[mode];
+            const modeButton = document.getElementById('search-mode-label');
+            modeButton.textContent = modeLabel;
+            modeButton.setAttribute('aria-label', `Search mode: ${modeLabel.replace('⌄', '')}`);
+            inputField.placeholder = mode === "local"
+                ? "Ask about the selected local data..."
+                : mode === 'mixed'
+                    ? 'Ask using selected data and live web...'
+                    : "Ask a question to search the live web...";
+            document.getElementById('search-menu').open = false;
+        }
+        document.querySelectorAll('input[name="search-mode"]').forEach((radio) => {
+            radio.addEventListener('change', updateSearchMode);
+        });
+        updateSearchMode();
+
+        function escapeHTML(value) {
+            return value.replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]);
+        }
+
+        function applySettingsToPage() {
+            const theme = ['dark', 'light', 'system', 'high-contrast'].includes(appSettings.theme)
+                ? appSettings.theme
+                : 'dark';
+            document.body.dataset.theme = theme;
+            document.body.dataset.fontSize = appSettings.fontSize === 'large' ? 'large' : 'normal';
+            document.body.dataset.reducedMotion = String(Boolean(appSettings.reducedMotion));
+            document.body.dataset.showStats = String(Boolean(appSettings.showStats));
+            document.getElementById('composer-hint').textContent = appSettings.enterToSend
+                ? 'Enter to send · Shift+Enter for a new line'
+                : 'Ctrl/Cmd+Enter to send · Enter for a new line';
+        }
+
+        function storeChat() {
+            if (!appSettings.saveHistory) return false;
+            try {
+                if (currentConversationId) {
+                    const active = chatArchive.find((conversation) => conversation.id === currentConversationId);
+                    if (active) {
+                        if (!saveChatArchive([
+                            { ...active, messages: chatMessages, updated_at: Date.now() },
+                            ...chatArchive.filter((conversation) => conversation.id !== currentConversationId)
+                        ])) return false;
+                        localStorage.removeItem(CHAT_KEY);
+                    } else {
+                        localStorage.setItem(CHAT_KEY, JSON.stringify(chatMessages));
+                    }
+                } else localStorage.setItem(CHAT_KEY, JSON.stringify(chatMessages));
+                localStorage.setItem(ACTIVE_CONVERSATION_KEY, JSON.stringify(currentConversationId));
+                return true;
+            } catch (error) {
+                console.error('Could not save this conversation in browser storage:', error);
+                document.getElementById('chat-history-status').textContent =
+                    'Could not save this conversation in browser storage. Download a backup and free browser storage.';
+                return false;
+            }
+        }
+
+        function normalizeChatMessage(message) {
+            const normalized = {
+                role: message.role,
+                content: message.content
+            };
+            if (Array.isArray(message.sources)) {
+                normalized.sources = message.sources
+                    .filter((source) =>
+                        source
+                        && typeof source.url === 'string'
+                        && typeof source.title === 'string'
+                    )
+                    .map((source) => {
+                        try {
+                            const url = new URL(source.url);
+                            if (!['http:', 'https:'].includes(url.protocol)) return null;
+                            return {
+                                url: url.href,
+                                title: source.title,
+                                ...(typeof source.published === 'string' ? { published: source.published } : {})
+                            };
+                        } catch {
+                            return null;
+                        }
+                    })
+                    .filter(Boolean);
+            }
+            if (message.metrics && typeof message.metrics === 'object' && !Array.isArray(message.metrics)) {
+                const metrics = {};
+                for (const [key, value] of Object.entries(message.metrics)) {
+                    if (
+                        value === null
+                        || typeof value === 'string'
+                        || typeof value === 'boolean'
+                        || (typeof value === 'number' && Number.isFinite(value))
+                    ) metrics[key] = value;
+                }
+                if (Object.keys(metrics).length) normalized.metrics = metrics;
+            }
+            return normalized;
+        }
+
+        function isValidBackupMessage(message) {
+            if (
+                !message
+                || !['user', 'assistant'].includes(message.role)
+                || typeof message.content !== 'string'
+            ) return false;
+            const normalized = normalizeChatMessage(message);
+            if (
+                Object.prototype.hasOwnProperty.call(message, 'sources')
+                && (!Array.isArray(message.sources) || normalized.sources?.length !== message.sources.length)
+            ) return false;
+            if (Object.prototype.hasOwnProperty.call(message, 'metrics')) {
+                if (!message.metrics || typeof message.metrics !== 'object' || Array.isArray(message.metrics)) return false;
+                if (Object.keys(normalized.metrics || {}).length !== Object.keys(message.metrics).length) return false;
+            }
+            return true;
+        }
+
+        function normalizeConversations(conversations) {
+            if (!Array.isArray(conversations)) return [];
+            const valid = conversations
+                .filter((conversation) =>
+                    conversation
+                    && typeof conversation.id === 'string'
+                    && typeof conversation.title === 'string'
+                    && Number.isFinite(conversation.updated_at)
+                    && Array.isArray(conversation.messages)
+                )
+                .map((conversation) => ({
+                    id: conversation.id,
+                    title: conversation.title.replace(/\s+/g, ' ').trim() || 'Conversation',
+                    updated_at: conversation.updated_at,
+                    messages: conversation.messages
+                        .filter((message) =>
+                            message
+                            && ['user', 'assistant'].includes(message.role)
+                            && typeof message.content === 'string'
+                        )
+                        .map(normalizeChatMessage)
+                }))
+                .filter((conversation) => conversation.messages.length);
+            const unique = new Map();
+            for (const conversation of valid) {
+                if (!unique.has(conversation.id)) unique.set(conversation.id, conversation);
+            }
+            return [...unique.values()].sort((first, second) => second.updated_at - first.updated_at);
+        }
+
+        function saveChatArchive(conversations) {
+            const normalized = normalizeConversations(conversations);
+            try {
+                localStorage.setItem(CHAT_ARCHIVE_KEY, JSON.stringify(normalized));
+                chatArchive = normalized;
+                renderChatArchive();
+                return true;
+            } catch (error) {
+                console.error('Could not save chat history in browser storage:', error);
+                document.getElementById('chat-history-status').textContent =
+                    'Could not save chat history. Download a backup, free browser storage, and try again.';
+                return false;
+            }
+        }
+
+        function renderChatArchive() {
+            const list = document.getElementById('chat-history-list');
+            list.replaceChildren();
+            document.getElementById('chat-history-count').textContent = String(chatArchive.length);
+            if (!appSettings.saveHistory) {
+                const empty = document.createElement('p');
+                empty.className = 'chat-history-empty';
+                empty.textContent = 'Saving is off. Existing chats are kept; turn it on to browse and save new changes.';
+                list.appendChild(empty);
+                return;
+            }
+            const query = document.getElementById('chat-history-search').value.trim().toLocaleLowerCase();
+            const matching = chatArchive.filter((conversation) =>
+                !query
+                || conversation.title.toLocaleLowerCase().includes(query)
+                || conversation.messages.some((message) => message.content.toLocaleLowerCase().includes(query))
+            );
+            if (!matching.length) {
+                const empty = document.createElement('p');
+                empty.className = 'chat-history-empty';
+                empty.textContent = query ? 'No saved chats match that search.' : 'Saved conversations appear here.';
+                list.appendChild(empty);
+                return;
+            }
+            const groups = new Map();
+            for (const conversation of matching) {
+                const date = new Date(conversation.updated_at);
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(today.getDate() - 1);
+                const key = date.toDateString() === today.toDateString()
+                    ? 'Today'
+                    : date.toDateString() === yesterday.toDateString()
+                        ? 'Yesterday'
+                        : date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(conversation);
+            }
+            for (const [dateLabel, conversations] of groups) {
+                const group = document.createElement('section');
+                group.className = 'chat-history-group';
+                const heading = document.createElement('h3');
+                heading.textContent = dateLabel;
+                group.appendChild(heading);
+                for (const conversation of conversations) {
+                    const item = document.createElement('div');
+                    item.className = 'chat-history-item';
+                    const open = document.createElement('button');
+                    open.type = 'button';
+                    open.className = 'chat-history-open';
+                    open.setAttribute('aria-current', String(conversation.id === currentConversationId));
+                    open.title = conversation.title;
+                    const title = document.createElement('span');
+                    title.textContent = conversation.title;
+                    const meta = document.createElement('small');
+                    meta.textContent = `${conversation.messages.length} messages · ${new Date(conversation.updated_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+                    open.append(title, meta);
+                    open.addEventListener('click', () => {
+                        if (conversation.id !== currentConversationId) {
+                            requestConversationSwitch(() => openSavedConversation(conversation.id));
+                        }
+                    });
+                    const remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.className = 'chat-history-delete';
+                    remove.textContent = '×';
+                    remove.title = 'Delete saved chat';
+                    remove.setAttribute('aria-label', `Delete saved chat: ${conversation.title}`);
+                    remove.addEventListener('click', () => deleteSavedConversation(conversation.id));
+                    item.append(open, remove);
+                    group.appendChild(item);
+                }
+                list.appendChild(group);
+            }
+        }
+
+        function saveCurrentConversation() {
+            if (!chatMessages.length) return true;
+            const firstPrompt = chatMessages.find((message) => message.role === 'user')?.content || 'Conversation';
+            const title = firstPrompt.replace(/\s+/g, ' ').trim();
+            const conversation = {
+                id: currentConversationId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                title: title.length > 52 ? `${title.slice(0, 49)}…` : title,
+                updated_at: Date.now(),
+                messages: chatMessages
+            };
+            if (!saveChatArchive([conversation, ...chatArchive.filter((item) => item.id !== conversation.id)])) {
+                return false;
+            }
+            currentConversationId = conversation.id;
+            try {
+                localStorage.removeItem(CHAT_KEY);
+                localStorage.setItem(ACTIVE_CONVERSATION_KEY, JSON.stringify(currentConversationId));
+            } catch (error) {
+                console.error('Could not save the active conversation:', error);
+                document.getElementById('chat-history-status').textContent =
+                    'The chat is archived, but the active-chat pointer could not be saved. Download a backup before closing this page.';
+            }
+            renderChatArchive();
+            return true;
+        }
+
+        function openSavedConversation(id) {
+            const conversation = chatArchive.find((item) => item.id === id);
+            if (!conversation) return;
+            currentConversationId = id;
+            chatMessages = conversation.messages.map((message) => ({ ...message }));
+            document.getElementById('chatbox').replaceChildren();
+            document.getElementById('conversation').classList.remove('has-messages');
+            restoreChat();
+            storeChat();
+            renderChatArchive();
+            document.getElementById('user-input').focus();
+        }
+
+        function deleteSavedConversation(id) {
+            if (isSending) return;
+            const conversation = chatArchive.find((item) => item.id === id);
+            if (!conversation || !window.confirm(`Delete saved chat “${conversation.title}”?`)) return;
+            if (!saveChatArchive(chatArchive.filter((item) => item.id !== id))) return;
+            if (currentConversationId === id) clearConversation();
+        }
+
+        function requestConversationSwitch(action) {
+            if (isSending) {
+                document.getElementById('chat-history-status').textContent =
+                    'Wait for the current response to finish before switching conversations.';
+                return;
+            }
+            if (!chatMessages.length) {
+                action();
+                return;
+            }
+            pendingConversationSwitch = action;
+            const canSave = appSettings.saveHistory;
+            document.getElementById('save-and-switch-chat').disabled = !canSave;
+            document.getElementById('conversation-switch-description').textContent = canSave
+                ? 'Save this conversation before switching? Cancel keeps it open and unchanged.'
+                : 'Saving is disabled in Settings. Discard starts the new chat without saving; Cancel keeps this conversation.';
+            document.getElementById('conversation-switch-dialog').showModal();
+        }
+
+        function completeConversationSwitch(save) {
+            if (isSending) return;
+            if (save && !saveCurrentConversation()) return;
+            if (!save) clearConversation();
+            const action = pendingConversationSwitch;
+            pendingConversationSwitch = null;
+            document.getElementById('conversation-switch-dialog').close();
+            if (action) action();
+        }
+
+        function currentConversationSnapshot() {
+            const storedMessages = chatMessages.length ? chatMessages : readStoredJson(CHAT_KEY, []);
+            const backupMessages = Array.isArray(storedMessages)
+                ? storedMessages.filter((message) =>
+                    message && ['user', 'assistant'].includes(message.role) && typeof message.content === 'string'
+                )
+                : [];
+            const backupConversationId = chatMessages.length
+                ? currentConversationId
+                : readStoredJson(ACTIVE_CONVERSATION_KEY, null);
+            if (!backupMessages.length) return null;
+            const active = chatArchive.find((conversation) => conversation.id === backupConversationId);
+            const firstPrompt = backupMessages.find((message) => message.role === 'user')?.content || 'Conversation';
+            return {
+                id: typeof backupConversationId === 'string' && backupConversationId
+                    ? backupConversationId
+                    : `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                title: active?.title || (firstPrompt.length > 52 ? `${firstPrompt.slice(0, 49)}…` : firstPrompt),
+                updated_at: Date.now(),
+                messages: backupMessages.map(normalizeChatMessage)
+            };
+        }
+
+        function downloadChatBackup() {
+            const conversations = [...chatArchive];
+            const current = currentConversationSnapshot();
+            if (current) conversations.unshift(current);
+            const backup = {
+                format: 'combat-ai-chat-archive',
+                version: 1,
+                exported_at: new Date().toISOString(),
+                conversations: normalizeConversations(conversations)
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const objectUrl = link.href;
+            link.download = `combat-ai-chats-${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+            document.getElementById('chat-history-status').textContent =
+                `Downloaded ${backup.conversations.length} chat(s).`;
+        }
+
+        async function restoreChatBackup(file) {
+            if (!appSettings.saveHistory) {
+                throw new Error('Turn on conversation saving in Settings before restoring chats.');
+            }
+            let backup;
+            try {
+                backup = JSON.parse(await file.text());
+            } catch (error) {
+                throw new Error(`Invalid JSON backup: ${error.message}`);
+            }
+            if (
+                !backup
+                || backup.format !== 'combat-ai-chat-archive'
+                || backup.version !== 1
+                || !Array.isArray(backup.conversations)
+            ) throw new Error('This is not a supported Combat AI chat backup.');
+            const rawConversations = backup.conversations;
+            const rawIds = rawConversations.map((conversation) => conversation?.id);
+            if (
+                rawConversations.some((conversation) =>
+                    !conversation
+                    || typeof conversation.id !== 'string'
+                    || typeof conversation.title !== 'string'
+                    || !Number.isFinite(conversation.updated_at)
+                    || !Array.isArray(conversation.messages)
+                    || !conversation.messages.length
+                    || conversation.messages.some((message) => !isValidBackupMessage(message))
+                )
+                || new Set(rawIds).size !== rawIds.length
+            ) throw new Error('The backup contains invalid or duplicate conversations. No chats were restored.');
+            const imported = normalizeConversations(rawConversations);
+            if (imported.length !== rawConversations.length) {
+                throw new Error('The backup contains invalid conversations. No chats were restored.');
+            }
+            if (!imported.length) throw new Error('The backup contains no readable conversations.');
+            const importedIds = new Set(imported.map((item) => item.id));
+            if (!saveChatArchive([...imported, ...chatArchive.filter((item) => !importedIds.has(item.id))])) {
+                throw new Error('Could not save imported chats. Download a backup, free browser storage, and try again.');
+            }
+            document.getElementById('chat-history-status').textContent =
+                `Restored ${imported.length} chat(s).`;
+        }
+
+        function appendChatMessage(role, content, addToHistory = true, metadata = null) {
+            const message = document.createElement('div');
+            message.className = role === 'user' ? 'user-msg' : 'ai-msg';
+            const label = document.createElement('b');
+            label.textContent = role === 'user' ? 'You: ' : 'AI Assistant:';
+            message.append(label, document.createElement('br'));
+            const text = document.createElement('span');
+            text.innerHTML = escapeHTML(content).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            message.appendChild(text);
+            document.getElementById('chatbox').appendChild(message);
+            document.getElementById('conversation').classList.add('has-messages');
+            if (addToHistory) {
+                chatMessages.push(normalizeChatMessage({ role, content, ...metadata }));
+                storeChat();
+            }
+            document.getElementById('chatbox').scrollTop = document.getElementById('chatbox').scrollHeight;
+            return message;
+        }
+
+        function appendAssistantMetadata(element, sources, metrics) {
+            if (Array.isArray(sources) && sources.length) {
+                const sourceHeading = document.createElement('b');
+                sourceHeading.textContent = 'Live web sources';
+                const sourceList = document.createElement('ol');
+                sourceList.className = 'source-list';
+                sourceList.setAttribute('aria-label', 'Live web sources used for this answer');
+                for (const source of normalizeChatMessage({ role: 'assistant', content: '', sources }).sources || []) {
+                    const item = document.createElement('li');
+                    const link = document.createElement('a');
+                    link.href = source.url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = source.title;
+                    const date = document.createElement('small');
+                    date.textContent = source.published
+                        ? ` — ${source.published}`
+                        : ' — publication date not provided';
+                    item.append(link, date);
+                    sourceList.appendChild(item);
+                }
+                if (sourceList.childElementCount) element.append(sourceHeading, sourceList);
+            }
+            if (appSettings.showStats && metrics) {
+                const normalizedMetrics = normalizeChatMessage({ role: 'assistant', content: '', metrics }).metrics;
+                if (!normalizedMetrics) return;
+                const stats = document.createElement('div');
+                stats.className = 'generation-stats';
+                const metricLabels = [
+                    ['Speed', normalizedMetrics.tokens_per_second == null ? 'n/a' : `${Number(normalizedMetrics.tokens_per_second).toFixed(1)} tok/s`],
+                    ['Tokens', normalizedMetrics.total_tokens == null
+                        ? 'n/a'
+                        : `${normalizedMetrics.prompt_tokens ?? '?'} in / ${normalizedMetrics.completion_tokens ?? '?'} out (${normalizedMetrics.total_tokens} total)`],
+                    ['KV reused', normalizedMetrics.kv_cache_reused_tokens == null
+                        ? 'not reported'
+                        : `${normalizedMetrics.kv_cache_reused_tokens} tokens`],
+                    ['Time', normalizedMetrics.duration_seconds == null ? 'n/a' : `${normalizedMetrics.duration_seconds}s`]
+                ];
+                for (const [label, value] of metricLabels) {
+                    const item = document.createElement('span');
+                    item.textContent = `${label}: ${value}`;
+                    stats.appendChild(item);
+                }
+                element.appendChild(stats);
+            }
+        }
+
+        function restoreChat() {
+            if (!Array.isArray(chatMessages)) chatMessages = [];
+            chatMessages = chatMessages.filter((message) =>
+                message && ['user', 'assistant'].includes(message.role) && typeof message.content === 'string'
+            );
+            for (const message of chatMessages) {
+                const element = appendChatMessage(message.role, message.content, false);
+                if (message.role === 'assistant') {
+                    appendAssistantMetadata(element, message.sources, message.metrics);
+                }
+            }
+        }
+
+        function clearConversation(clearSaved = true) {
+            chatMessages = [];
+            currentConversationId = null;
+            document.getElementById('chatbox').replaceChildren();
+            document.getElementById('conversation').classList.remove('has-messages');
+            document.getElementById('user-input').focus();
+            if (clearSaved) {
+                try {
+                    localStorage.removeItem(CHAT_KEY);
+                    localStorage.removeItem(ACTIVE_CONVERSATION_KEY);
+                } catch (error) {
+                    console.warn('Could not clear the saved conversation:', error);
+                }
+            }
+            renderChatArchive();
+        }
+
+        function exportConversation() {
+            const conversation = currentConversationSnapshot();
+            if (!conversation) {
+                document.getElementById('chat-history-status').textContent =
+                    'There is no current conversation to export.';
+                return;
+            }
+            const data = new Blob([JSON.stringify({
+                format: 'combat-ai-chat-archive',
+                version: 1,
+                exported_at: new Date().toISOString(),
+                conversations: [conversation]
+            }, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(data);
+            const objectUrl = link.href;
+            link.download = `combat-ai-chat-${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        }
+
+        function openSettings() {
+            const backdrop = document.getElementById('settings-backdrop');
+            settingsReturnFocus = document.activeElement;
+            document.getElementById('setting-theme').value = appSettings.theme;
+            document.getElementById('setting-enter-send').checked = appSettings.enterToSend;
+            document.getElementById('setting-save-history').checked = appSettings.saveHistory;
+            document.getElementById('setting-font-size').value = appSettings.fontSize;
+            document.getElementById('setting-reduced-motion').checked = appSettings.reducedMotion;
+            document.getElementById('setting-answer-style').value = appSettings.answerStyle;
+            document.getElementById('setting-temperature').value = appSettings.temperature;
+            document.getElementById('temperature-value').value = Number(appSettings.temperature).toFixed(2);
+            document.getElementById('setting-instructions').value = appSettings.instructions;
+            document.getElementById('setting-model-id').value =
+                appSettings.modelId || currentModelStatus?.models?.[0] || currentModelStatus?.model || '';
+            document.getElementById('setting-max-tokens').value = appSettings.maxTokens;
+            document.getElementById('setting-show-stats').checked = appSettings.showStats;
+            backdrop.classList.add('open');
+            document.getElementById('settings-dialog').focus();
+            document.getElementById('tab-general').focus();
+            refreshModelStatus();
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-backdrop').classList.remove('open');
+            if (settingsReturnFocus && typeof settingsReturnFocus.focus === 'function') settingsReturnFocus.focus();
+        }
+
+        function saveSettingsFromForm() {
+            const wasHistoryEnabled = appSettings.saveHistory;
+            appSettings = {
+                theme: document.getElementById('setting-theme').value,
+                enterToSend: document.getElementById('setting-enter-send').checked,
+                saveHistory: document.getElementById('setting-save-history').checked,
+                fontSize: document.getElementById('setting-font-size').value,
+                reducedMotion: document.getElementById('setting-reduced-motion').checked,
+                answerStyle: document.getElementById('setting-answer-style').value,
+                temperature: Number(document.getElementById('setting-temperature').value),
+                instructions: document.getElementById('setting-instructions').value.trim(),
+                modelId: document.getElementById('setting-model-id').value.trim(),
+                maxTokens: Math.max(1, Math.min(8192, Number(document.getElementById('setting-max-tokens').value) || 512)),
+                showStats: document.getElementById('setting-show-stats').checked
+            };
+            if (appSettings.modelId && (appSettings.modelId.length > 200 || /[\u0000-\u001f]/.test(appSettings.modelId))) {
+                document.getElementById('settings-status').textContent =
+                    'Model ID must be 200 characters or fewer and contain no control characters.';
+                return;
+            }
+            applySettingsToPage();
+            try {
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+                if (appSettings.saveHistory) {
+                    if (!wasHistoryEnabled && !chatMessages.length) {
+                        chatMessages = readStoredJson(CHAT_KEY, []);
+                        if (!Array.isArray(chatMessages)) chatMessages = [];
+                        currentConversationId = readStoredJson(ACTIVE_CONVERSATION_KEY, null);
+                        if (
+                            typeof currentConversationId !== 'string'
+                            || !chatArchive.some((conversation) => conversation.id === currentConversationId)
+                        ) currentConversationId = null;
+                        if (!chatMessages.length && currentConversationId) {
+                            chatMessages = chatArchive.find((conversation) =>
+                                conversation.id === currentConversationId
+                            ).messages;
+                        }
+                        restoreChat();
+                    }
+                    const historySaved = storeChat();
+                    if (!historySaved) {
+                        document.getElementById('settings-status').textContent =
+                            'Settings saved, but the current chat could not be saved. Download a chat backup.';
+                        closeSettings();
+                        return;
+                    }
+                }
+                document.getElementById('settings-status').textContent = appSettings.saveHistory
+                    ? 'Settings saved in this browser.'
+                    : 'Settings saved. Existing chats were kept; new changes will not be saved.';
+            } catch (error) {
+                document.getElementById('settings-status').textContent = 'Could not save settings in browser storage.';
+                console.error('Could not save settings:', error);
+            }
+            closeSettings();
+        }
+
+        function activateSettingsTab(tab) {
+            document.querySelectorAll('.settings-tab').forEach((button) => {
+                const selected = button === tab;
+                button.setAttribute('aria-selected', String(selected));
+                button.tabIndex = selected ? 0 : -1;
+                document.getElementById(button.getAttribute('aria-controls')).hidden = !selected;
+                document.getElementById(button.getAttribute('aria-controls')).classList.toggle('active', selected);
+            });
+        }
+
+        document.querySelectorAll('.settings-tab').forEach((tab, index, tabs) => {
+            tab.addEventListener('click', () => activateSettingsTab(tab));
+            tab.addEventListener('keydown', (event) => {
+                if (!['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                const next = event.key === 'Home' ? 0
+                    : event.key === 'End' ? tabs.length - 1
+                        : (index + (event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+                tabs[next].focus();
+                activateSettingsTab(tabs[next]);
+            });
+        });
+        ['open-settings', 'settings-shortcut'].forEach((id) =>
+            document.getElementById(id).addEventListener('click', openSettings)
+        );
+        document.getElementById('close-settings').addEventListener('click', closeSettings);
+        document.getElementById('settings-backdrop').addEventListener('click', (event) => {
+            if (event.target === event.currentTarget) closeSettings();
+        });
+        document.getElementById('save-settings').addEventListener('click', saveSettingsFromForm);
+        document.getElementById('reset-settings').addEventListener('click', () => {
+            appSettings = { ...defaultSettings };
+            openSettings();
+            document.getElementById('settings-status').textContent = 'Defaults loaded. Save to apply them.';
+        });
+        document.getElementById('setting-temperature').addEventListener('input', (event) => {
+            document.getElementById('temperature-value').value = Number(event.target.value).toFixed(2);
+        });
+        document.getElementById('refresh-models').addEventListener('click', refreshModelStatus);
+        document.getElementById('refresh-model-status').addEventListener('click', refreshModelStatus);
+        document.getElementById('chat-history-search').addEventListener('input', renderChatArchive);
+        document.getElementById('download-chat-backup').addEventListener('click', downloadChatBackup);
+        document.getElementById('restore-chat-backup').addEventListener('click', () =>
+            document.getElementById('chat-backup-file').click()
+        );
+        document.getElementById('chat-backup-file').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                await restoreChatBackup(file);
+            } catch (error) {
+                document.getElementById('chat-history-status').textContent = error.message;
+                console.error('Could not restore chat backup:', error);
+            } finally {
+                event.target.value = '';
+            }
+        });
+        document.getElementById('clear-chat').addEventListener('click', () =>
+            requestConversationSwitch(() => clearConversation())
+        );
+        document.getElementById('clear-saved-chat').addEventListener('click', () => {
+            if (isSending) {
+                document.getElementById('chat-history-status').textContent =
+                    'Wait for the current response to finish before clearing saved chats.';
+                return;
+            }
+            if (!window.confirm('Delete all saved chats and the current draft from this browser? This cannot be undone.')) return;
+            try {
+                localStorage.removeItem(CHAT_KEY);
+                localStorage.removeItem(CHAT_ARCHIVE_KEY);
+                localStorage.removeItem(ACTIVE_CONVERSATION_KEY);
+                chatArchive = [];
+                currentConversationId = null;
+                clearConversation(false);
+                renderChatArchive();
+                document.getElementById('settings-status').textContent =
+                    'All saved chats and the current draft were deleted from this browser.';
+            } catch (error) {
+                document.getElementById('settings-status').textContent = 'Could not clear saved chats.';
+                console.error('Could not clear saved chats:', error);
+            }
+        });
+        document.getElementById('new-chat').addEventListener('click', () =>
+            requestConversationSwitch(() => clearConversation())
+        );
+        document.getElementById('save-and-switch-chat').addEventListener('click', () =>
+            completeConversationSwitch(true)
+        );
+        document.getElementById('discard-and-switch-chat').addEventListener('click', () =>
+            completeConversationSwitch(false)
+        );
+        document.getElementById('cancel-switch-chat').addEventListener('click', () => {
+            pendingConversationSwitch = null;
+            document.getElementById('conversation-switch-dialog').close();
+        });
+        document.getElementById('conversation-switch-dialog').addEventListener('cancel', () => {
+            pendingConversationSwitch = null;
+        });
+        document.getElementById('export-chat').addEventListener('click', exportConversation);
+        document.getElementById('export-settings-chat').addEventListener('click', exportConversation);
+        document.getElementById('collapse-sidebar').addEventListener('click', () => {
+            document.body.classList.remove('mobile-sidebar-open');
+            document.body.classList.add('sidebar-collapsed');
+        });
+        document.getElementById('open-sidebar').addEventListener('click', () => {
+            document.body.classList.remove('sidebar-collapsed');
+            document.body.classList.toggle('mobile-sidebar-open');
+        });
+        document.getElementById('search-conversations').addEventListener('click', () => {
+            const query = window.prompt('Search this conversation');
+            if (!query) return;
+            const match = [...document.querySelectorAll('#chatbox .user-msg, #chatbox .ai-msg')]
+                .find((message) => message.textContent.toLowerCase().includes(query.toLowerCase()));
+            if (match) match.scrollIntoView({ block: 'center' });
+            else document.getElementById('settings-status').textContent = 'No matching message in this conversation.';
+        });
+        document.addEventListener('keydown', (event) => {
+            const dialogOpen = document.getElementById('settings-backdrop').classList.contains('open');
+            if (event.key === 'Escape' && dialogOpen) {
+                closeSettings();
+                return;
+            }
+            if (event.key === 'Tab' && dialogOpen) {
+                const focusable = [...document.querySelectorAll(
+                    '#settings-dialog button:not([disabled]), #settings-dialog input:not([disabled]), #settings-dialog select:not([disabled]), #settings-dialog textarea:not([disabled])'
+                )].filter((element) => element.offsetParent !== null);
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            }
+            if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'o') {
+                event.preventDefault();
+                requestConversationSwitch(() => clearConversation());
+            }
+        });
+        document.getElementById('user-input').addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' || event.shiftKey) return;
+            if (appSettings.enterToSend) {
+                event.preventDefault();
+                sendMessage(event);
+            } else if (event.ctrlKey || event.metaKey) {
+                event.preventDefault();
+                sendMessage(event);
+            }
+        });
+        async function pollDatasetImport(jobId, progressElement) {
+            const progress = progressElement.querySelector('progress');
+            const label = progressElement.querySelector('span');
+            while (true) {
+                const response = await fetch(
+                    `${serverBaseURL}/datasets/import/jobs/${encodeURIComponent(jobId)}`
+                );
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+                progress.value = data.percent || 0;
+                label.textContent = `${data.phase || 'Working'} · ${data.percent || 0}% · ${data.detail || ''}`;
+                if (data.status === 'complete') return data.result;
+                if (data.status === 'failed') throw new Error(data.error || data.detail || 'Import failed.');
+                await new Promise((resolve) => setTimeout(resolve, 750));
+            }
+        }
+
+        async function submitDatasetImport(formId, statusId, progressId, endpoint, payloadFactory) {
+            const form = document.getElementById(formId);
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const button = form.querySelector('button[type="submit"]');
+                const status = document.getElementById(statusId);
+                const progressElement = document.getElementById(progressId);
+                const progress = progressElement.querySelector('progress');
+                const progressLabel = progressElement.querySelector('span');
+                button.disabled = true;
+                status.textContent = 'Validating and processing dataset…';
+                progressElement.hidden = false;
+                progressElement.classList.remove('failed');
+                progress.removeAttribute('value');
+                progressLabel.textContent = 'Preparing import…';
+                try {
+                    const payload = await payloadFactory();
+                    const response = await fetch(`${serverBaseURL}${endpoint}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+                    const result = await pollDatasetImport(data.job_id, progressElement);
+                    await activateImportedDataset(result.id || result.dataset_id);
+                    status.textContent = `Ready · ${result.source_type} / ${result.data_type} · ${result.name} · ${result.items} passages. Automatically selected.`;
+                    for (const input of form.querySelectorAll('input[type="password"]')) input.value = '';
+                } catch (error) {
+                    status.textContent = `Import failed: ${error.message}`;
+                    progressElement.classList.add('failed');
+                    progressLabel.textContent = `Failed · ${error.message}`;
+                    console.error(`Dataset import failed (${formId}):`, error);
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        }
+
+        submitDatasetImport('text-import-form', 'text-import-status', 'text-import-progress', '/datasets/import/text/jobs', async () => {
+            const file = document.getElementById('text-dataset-file').files[0];
+            const pasted = document.getElementById('text-dataset-content').value;
+            if (file && pasted.trim()) throw new Error('Paste text or choose a file, not both.');
+            if (file && !/\.(txt|md)$/i.test(file.name)) throw new Error('Choose a .txt or .md file.');
+            const text = pasted.trim() || (file ? await file.text() : '');
+            if (!text.trim()) throw new Error('Paste text or choose a .txt / .md file first.');
+            return {
+                source_type: 'LOCAL',
+                name: document.getElementById('text-dataset-name').value.trim(),
+                scenario: document.getElementById('text-dataset-scenario').value.trim(),
+                source: file ? file.name : 'Local pasted text',
+                text
+            };
+        });
+        submitDatasetImport('local-embedded-form', 'local-embedded-status', 'local-embedded-progress', '/datasets/import/embedded/jobs', async () => {
+            const file = document.getElementById('local-embedded-file').files[0];
+            if (!file) throw new Error('Choose an embedding JSON file.');
+            const payload = JSON.parse(await file.text());
+            const passages = payload.passages || payload.documents;
+            const embeddings = payload.embeddings || payload.vectors;
+            if (!Array.isArray(passages) || !Array.isArray(embeddings)) {
+                throw new Error('The JSON must contain passages/documents and embeddings/vectors arrays.');
+            }
+            return {
+                source_type: 'LOCAL',
+                name: file.name.replace(/\.json$/i, ''),
+                scenario: document.getElementById('local-embedded-scenario').value.trim(),
+                source_path: file.name,
+                embedding_model: payload.embedding_model || payload.model || 'all-MiniLM-L6-v2',
+                passages,
+                embeddings
+            };
+        });
+        submitDatasetImport('local-pages-form', 'local-pages-status', 'local-pages-progress', '/datasets/import/pages/jobs', async () => ({
+            source_type: 'LOCAL',
+            source_path: document.getElementById('local-pages-source').value.trim(),
+            page_type: document.getElementById('local-pages-type').value.toUpperCase(),
+            name: document.getElementById('local-pages-name').value.trim(),
+            scenario: document.getElementById('local-pages-scenario').value.trim()
+        }));
+        submitDatasetImport('api-text-form', 'api-text-status', 'api-text-progress', '/datasets/import/text/jobs', async () => ({
+            source_type: 'ONLINE_API',
+            source_url: document.getElementById('api-text-source').value.trim(),
+            api_key: document.getElementById('api-text-key').value || undefined,
+            name: document.getElementById('api-text-name').value.trim(),
+            scenario: document.getElementById('api-text-scenario').value.trim()
+        }));
+        submitDatasetImport('api-embedded-form', 'api-embedded-status', 'api-embedded-progress', '/datasets/import/embedded/jobs', async () => ({
+            source_type: 'ONLINE_API',
+            source_url: document.getElementById('api-embedded-source').value.trim(),
+            api_key: document.getElementById('api-embedded-key').value || undefined,
+            name: document.getElementById('api-embedded-name').value.trim(),
+            scenario: document.getElementById('api-embedded-scenario').value.trim(),
+            embedding_model: 'all-MiniLM-L6-v2',
+            passages: [],
+            embeddings: []
+        }));
+        submitDatasetImport('api-pages-form', 'api-pages-status', 'api-pages-progress', '/datasets/import/pages/jobs', async () => ({
+            source_type: 'ONLINE_API',
+            source_url: document.getElementById('api-pages-source').value.trim(),
+            api_key: document.getElementById('api-pages-key').value || undefined,
+            page_type: document.getElementById('api-pages-type').value.toUpperCase(),
+            name: document.getElementById('api-pages-name').value.trim(),
+            scenario: document.getElementById('api-pages-scenario').value.trim()
+        }));
+
+        document.addEventListener('change', (event) => {
+            if (event.target instanceof HTMLInputElement && event.target.matches('input[name="dataset-source"]')) {
+                updateSelectedSourceCount();
+                try {
+                    localStorage.setItem(SOURCES_KEY, JSON.stringify(selectedDatasetIds()));
+                } catch (error) {
+                    console.warn('Could not save selected data sources:', error);
+                }
+            }
+        });
+        document.querySelectorAll('input[name="search-mode"]').forEach((input) =>
+            input.addEventListener('change', () => {
+                try {
+                    localStorage.setItem('combat-ai-search-mode-v1', JSON.stringify(input.value));
+                } catch (error) {
+                    console.warn('Could not save search mode:', error);
+                }
+            })
+        );
+        applySettingsToPage();
+        updateSelectedSourceCount();
+        restoreChat();
+        renderChatArchive();
+
+        async function sendMessage(event) {
+            if (event) event.preventDefault();
+            if (isSending) return;
+
+            const inputField = document.getElementById('user-input');
+            const chatbox = document.getElementById('chatbox');
+            const datasetIds = selectedDatasetIds();
+            const searchMode = document.querySelector('input[name="search-mode"]:checked').value;
+
+            const query = inputField.value.trim();
+            if (!query) return;
+            if (searchMode !== 'web' && datasetIds.length === 0) {
+                inputField.setCustomValidity('Select at least one data source.');
+                inputField.reportValidity();
+                inputField.setCustomValidity('');
+                return;
+            }
+
+            isSending = true;
+            const sendButton = document.querySelector('.send-button');
+            sendButton.disabled = true;
+            document.getElementById('new-chat').disabled = true;
+            document.getElementById('clear-chat').disabled = true;
+            document.getElementById('clear-saved-chat').disabled = true;
+            const userMessageElement = appendChatMessage('user', query);
+            inputField.value = '';
+
+            const loadingId = "load-" + Date.now();
+            const selectedDatasets = datasetIds.map((id) => datasetStatuses.get(id));
+            const selectedDatasetNames = escapeHTML(selectedDatasets
+                .map((dataset, index) => dataset?.name || datasetIds[index])
+                .join(', '));
+            const selectedDataset = selectedDatasets[0];
+            const statusText = searchMode === "web"
+                ? "<i>🌐 Searching the live web...</i>"
+                : searchMode === "mixed"
+                    ? `<i>📚 Searching ${selectedDatasetNames} and the live web...</i>`
+                    : selectedDataset?.mode === "text"
+                        ? `<i>📥 Preparing ${selectedDatasetNames}...</i>`
+                        : selectedDataset?.mode === "preembedded"
+                            ? `<i>🔎 Searching ${selectedDatasetNames}...</i>`
+                            : `<i>📚 Preparing and searching ${selectedDatasetNames}...</i>`;
+
+            const loadingMessage = document.createElement('div');
+            loadingMessage.className = 'ai-msg';
+            loadingMessage.id = loadingId;
+            loadingMessage.innerHTML = statusText;
+            chatbox.appendChild(loadingMessage);
+            chatbox.scrollTop = chatbox.scrollHeight;
+
+            try {
+                if (searchMode !== "web") {
+                    const unindexedConfiguredDatasets = datasetIds.filter((id) => {
+                        const dataset = datasetStatuses.get(id);
+                        const sourceType = dataset?.source_type ||
+                            (dataset?.scope === 'api' ? 'ONLINE_API' : 'LOCAL');
+                        const mode = dataset?.metadata?.mode || dataset?.mode;
+                        return sourceType === 'ONLINE_API' &&
+                            mode === 'text' &&
+                            (dataset?.status ? dataset.status !== 'READY' : !dataset?.indexed);
+                    });
+                    await Promise.all(
+                        unindexedConfiguredDatasets.map((id) => prepareConfiguredApiDataset(id))
+                    );
+                }
+                // Communicates natively with the server backend /ask path
+                const response = await fetch(`${serverBaseURL}/ask`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: query,
+                        search_mode: searchMode,
+                        dataset_ids: datasetIds.length ? datasetIds : undefined,
+                        temperature: appSettings.temperature,
+                        answer_style: appSettings.answerStyle,
+                        answer_instructions: appSettings.instructions,
+                        model_id: appSettings.modelId || undefined,
+                        max_tokens: appSettings.maxTokens,
+                        conversation_history: chatMessages.slice(0, -1).slice(-10).map((message) => ({
+                            role: message.role,
+                            content: message.content.slice(-3500)
+                        }))
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `HTTP Error Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                const assistantMessage = normalizeChatMessage({
+                    role: 'assistant',
+                    content: data.reply,
+                    sources: data.sources,
+                    metrics: data.metrics
+                });
+                chatMessages.push(assistantMessage);
+                storeChat();
+                const formattedReply = escapeHTML(data.reply)
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+
+                loadingMessage.replaceChildren();
+                const assistantLabel = document.createElement('b');
+                assistantLabel.textContent = 'AI Assistant:';
+                const reply = document.createElement('div');
+                reply.innerHTML = formattedReply;
+                loadingMessage.append(assistantLabel, document.createElement('br'), reply);
+
+                appendAssistantMetadata(loadingMessage, assistantMessage.sources, assistantMessage.metrics);
+                chatbox.scrollTop = chatbox.scrollHeight;
+                if (searchMode !== "web") {
+                    try {
+                        await refreshDatasetStatus();
+                    } catch (error) {
+                        console.warn('The answer succeeded, but dataset status could not be refreshed:', error);
+                        document.getElementById('chat-history-status').textContent =
+                            'The answer succeeded, but dataset status could not be refreshed. Reload the page to retry.';
+                    }
+                }
+
+            } catch (error) {
+                console.error("Network Stack Error:", error);
+                const failureText = `Request failed: ${error.message} (Endpoint: ${serverBaseURL}/ask)`;
+                loadingMessage.textContent = failureText;
+                userMessageElement.remove();
+                const lastMessage = chatMessages[chatMessages.length - 1];
+                if (lastMessage?.role === 'user' && lastMessage.content === query) {
+                    chatMessages.pop();
+                }
+                storeChat();
+                if (!inputField.value.trim()) inputField.value = query;
+                inputField.focus();
+                chatbox.scrollTop = chatbox.scrollHeight;
+            } finally {
+                isSending = false;
+                sendButton.disabled = false;
+                document.getElementById('new-chat').disabled = false;
+                document.getElementById('clear-chat').disabled = false;
+                document.getElementById('clear-saved-chat').disabled = false;
+                renderChatArchive();
+            }
+        }
+    </script>
+
+</body>
+
+</html>

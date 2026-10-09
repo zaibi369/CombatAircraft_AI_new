@@ -1,0 +1,44 @@
+# Python / virtual envs
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+.venv*/
+.offline-venv/
+.web-venv/
+.ocr-venv/
+venv/
+env/
+
+# Local env secrets
+.env
+.env.*
+!.env.example
+
+# Local AI / generated data
+aircraft_vector_db/
+aircraft_vector_db_clean/
+aircraft_vector_db_elon/
+book_images/
+dataset/
+*.gguf
+*.sqlite3
+*.db
+*.log
+
+# OCR/temp files
+ocr_output/
+tmp/
+temp/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Python packaging
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

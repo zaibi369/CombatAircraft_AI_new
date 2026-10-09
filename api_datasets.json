@@ -1,0 +1,6 @@
+{
+  "$schema": "./api_datasets.schema.json",
+  "default_embedding_provider": "local",
+  "default_embedding_model": "all-MiniLM-L6-v2",
+  "datasets": []
+}

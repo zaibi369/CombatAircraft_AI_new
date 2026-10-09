@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "api_datasets.schema.json",
+  "title": "API dataset registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["datasets"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "default_embedding_provider": {
+      "type": "string",
+      "enum": ["local", "ollama"],
+      "default": "local"
+    },
+    "default_embedding_model": {
+      "type": "string",
+      "minLength": 1,
+      "default": "all-MiniLM-L6-v2"
+    },
+    "datasets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dataset"
+      }
+    }
+  },
+  "$defs": {
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "mode", "database"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,62}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["text", "preembedded"]
+        },
+        "data_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "embedding_provider": {
+          "type": "string",
+          "enum": ["local", "ollama"],
+          "default": "local"
+        },
+        "embedding_model": {
+          "type": "string",
+          "minLength": 1,
+          "default": "all-MiniLM-L6-v2"
+        },
+        "embedding_dimensions": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Required when mode is preembedded."
+        },
+        "embedding_api_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "embedding_api_key_env": {
+          "type": "string",
+          "minLength": 1
+        },
+        "api_key_env": {
+          "type": "string",
+          "minLength": 1
+        },
+        "api_key_header": {
+          "type": "string",
+          "minLength": 1
+        },
+        "api_key_prefix": {
+          "type": "string"
+        },
+        "pooling": {
+          "type": "string",
+          "enum": ["mean", "cls", "last_token"],
+          "default": "mean"
+        },
+        "normalize_embeddings": {
+          "type": "boolean",
+          "default": false
+        },
+        "query_prefix": {
+          "type": "string",
+          "default": ""
+        },
+        "document_prefix": {
+          "type": "string",
+          "default": ""
+        },
+        "database": {
+          "description": "Every dataset must have a dedicated vector database destination. Do not reuse another dataset's collection/namespace.",
+          "$ref": "#/$defs/vectorDatabase"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "text"
+              }
+            }
+          },
+          "then": {
+            "required": ["data_url"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "preembedded"
+              }
+            }
+          },
+          "then": {
+            "required": ["embedding_dimensions"]
+          }
+        },
+        {
+          "properties": {
+            "database": {
+              "properties": {
+                "type": {
+                  "const": "pinecone"
+                }
+              },
+              "required": ["type"]
+            }
+          },
+          "then": {
+            "properties": {
+              "database": {
+                "required": ["api_key_env"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "vectorDatabase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url", "collection"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["chroma", "pinecone", "weaviate"]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "collection": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Dedicated collection/index/class for this dataset."
+        },
+        "api_key_env": {
+          "type": "string",
+          "minLength": 1
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Use a unique namespace per dataset when sharing a Pinecone index."
+        },
+        "tenant": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "text_property": {
+          "type": "string",
+          "default": "text"
+        },
+        "title_property": {
+          "type": "string",
+          "default": "title"
+        },
+        "api_key_header": {
+          "type": "string"
+        },
+        "api_key_prefix": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
